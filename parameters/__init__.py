@@ -1,4 +1,7 @@
 """
+This file was originally taken from NeuroTools trunk revision 445.
+It has been modified to remove numpy dependencies.
+
 NeuroTools.parameters
 =====================
 
@@ -8,29 +11,11 @@ Classes
 -------
 
 Parameter
-ParameterRange  - for specifying a list of possible values for a given parameter.
-ParameterSet    - for representing/managing hierarchical parameter sets.
-ParameterTable  - a sub-class of ParameterSet that can represent a table of parameters.
-ParameterSpace  - a collection of ParameterSets, representing multiple points in
-                  parameter space.
-
-**Imported from NeuroTools.parameters.validators**
-
-ParameterSchema      - A sub-class of ParameterSet against which other ParameterSets can be validated
-                       against using a Validator as found in the sub-package
-                       NeuroTools.parameters.validators 
-
-CongruencyValidator  - A CongruencyValidator validates a ParameterSet against a ParameterSchema
-                       via member "validate(parameter_set,parameter_schema)".
-
-ValidationError      - The Exception raised when validation fails
-
-SchemaBase           - The base class of all "active" Schema objects to be placed in a ParameterSchema.
--> Sublass           - Validates the same-path ParameterSet value if it is of the specified type.
--> Eval              - Validates the same-path ParameterSet value if the provided expression
-                       evaluates ("eval") to True.
-
-
+ParameterRange - for specifying a list of possible values for a given parameter.
+ParameterSet   - for representing/managing hierarchical parameter sets.
+ParameterTable - a sub-class of ParameterSet that can represent a table of parameters.
+ParameterSpace - a collection of ParameterSets, representing multiple points in
+                 parameter space.
 
 Functions
 ---------
@@ -39,21 +24,19 @@ nesteddictwalk    - Walk a nested dict structure, using a generator.
 nesteddictflatten - Return a flattened version of a nested dict structure.
 string_table      - Convert a table written as a multi-line string into a dict of dicts.
 
-
-
-Sub-Packages
-------------
-
-validators        - A module implementing validation of ParameterSets against ParameterSchema.
-
 """
 
-import urllib, copy, warnings, numpy, numpy.random  # to be replaced with srblib
+import urllib, copy, warnings, math, urllib2
 from urlparse import urlparse
-from NeuroTools import check_dependency
-from NeuroTools.random import ParameterDist, GammaDist, UniformDist, NormalDist
-#from NeuroTools.parameters.validators import schema_checkers_namespace
-#from NeuroTools.parameters.validators import Subclass
+from os import environ, path
+from sumatra.external.NeuroTools.random import ParameterDist, GammaDist, UniformDist, NormalDist
+
+if 'HTTP_PROXY' in environ:
+    HTTP_PROXY = environ['HTTP_PROXY'] # user has to define it
+    ''' next lines are for communication to urllib of proxy information '''
+    proxy_support = urllib2.ProxyHandler({"https":HTTP_PROXY})
+    opener = urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
+    urllib2.install_opener(opener)
 
 def isiterable(x):
     return (hasattr(x,'__iter__') and not isinstance(x, basestring))
@@ -129,7 +112,9 @@ class ParameterRange(Parameter):
         Parameter.__init__(self, value.__iter__().next(), units, name)
         self._iter_values = value.__iter__()
         if shuffle:
-            self._values = numpy.random.permutation(value)
+            self._values = value
+            random.shuffle(self._values)
+            #self._values = numpy.random.permutation(value)
         else:
             self._values = value
     
@@ -184,7 +169,7 @@ class ParameterSet(dict):
     invalid_names = ['parameters', 'names'] # should probably add dir(dict)
     
     @staticmethod
-    def read_from_str(s,update_namespace=None):
+    def read_from_str(s):
         """
         ParameterSet definition s should be a Python dict definition
         string, containing objects of types int, float, str, list,
@@ -210,17 +195,23 @@ class ParameterSet(dict):
                                 GammaDist=GammaDist,
                                 UniformDist=UniformDist,
                                 NormalDist=NormalDist,
-                                pi=numpy.pi))
-        if update_namespace:
-            global_dict.update(update_namespace)
-
-        
-        D=None
+                                pi=math.pi,
+                                true=True,    # these are for reading JSON 
+                                false=False,  # files
+                                ))            
         try:
-            D = eval(s, global_dict)
-        except SyntaxError as e:
+            if 'file://' in s:
+                path = s.split('file://')[1]
+                ifile = open(path, 'r')
+                content = ifile.read()
+                ifile.close()
+                D = eval(content, global_dict)           
+            else:
+                D = eval(s, global_dict)
+        except SyntaxError, e:
             raise SyntaxError("Invalid string for ParameterSet definition: %s\n%s" % (s,e))
-            
+        except TypeError, e:
+            raise SyntaxError("Invalid string for ParameterSet definition: %s" % e)
         return D or {}
     
     @staticmethod
@@ -228,8 +219,8 @@ class ParameterSet(dict):
         if k in ParameterSet.invalid_names:
             raise Exception("'%s' is not allowed as a parameter name." % k)
     
-    def __init__(self, initialiser, label=None, update_namespace=None):
-
+    def __init__(self, initialiser, label=None):
+        
         def walk(d, label):
             # Iterate through the dictionary `d`, replacing `dict`s by
             # `ParameterSet` objects.
@@ -245,36 +236,25 @@ class ParameterSet(dict):
         
         self._url = None
         if isinstance(initialiser, basestring): # url or str
-            try:
-                # can't handle cases where authentication is required
-                # should be rewritten using urllib2 
-                #scheme, netloc, path, \
-                #        parameters, query, fragment = urlparse(initialiser)
-                f = urllib.urlopen(initialiser)
+            if path.exists(initialiser):
+                f = open(initialiser)
                 pstr = f.read()
                 self._url = initialiser
-
-                
-            except IOError:
-                pstr = initialiser
-                self._url = None
-            else:
                 f.close()
-
-
-            # is it a yaml url?
-            if self._url:
-                import urlparse, os.path
-                o = urlparse.urlparse(self._url)
-                base,ext = os.path.splitext(o.path)
-                if ext in ['.yaml','.yml']:
-                    import yaml
-                    initialiser = yaml.load(pstr)
-                else:
-                    initialiser = ParameterSet.read_from_str(pstr,update_namespace)
             else:
-                initialiser = ParameterSet.read_from_str(pstr,update_namespace)
+                try:
+                    # can't handle cases where authentication is required
+                    # should be rewritten using urllib2 
+                    f= urllib2.urlopen(initialiser)
+                    pstr = f.read()
+                    self._url = initialiser
+                except IOError, e:
+                    pstr = initialiser
+                    self._url = None
+                else:
+                    f.close()
 
+            initialiser = ParameterSet.read_from_str(pstr)
         
         # By this stage, `initialiser` should be a dict. Iterate through it,
         # copying its contents into the current instance, and replacing dicts by
@@ -289,8 +269,8 @@ class ParameterSet(dict):
                 else:
                     self[k] = v
         else:
-            raise TypeError("`initialiser` must be a `dict`, a `ParameterSet` object, a string, or a valid URL")
-
+            raise TypeError("`initialiser` must be a `dict`, a `ParameterSet` object or a valid URL")
+                    
         # Set the label
         if hasattr(initialiser, 'label'):
             self.label = label or initialiser.label # if initialiser was a ParameterSet, keep the existing label if the label arg is None
@@ -302,7 +282,6 @@ class ParameterSet(dict):
         # for name in P.names():
         self.names = self.keys
         self.parameters = self.items
-
         
     def flat(self):
         __doc__ = nesteddictwalk.__doc__
@@ -336,36 +315,25 @@ class ParameterSet(dict):
         # nested get
         return dict.__getitem__(self,split[0])[split[1]]
 
-    def flat_add(self,name,value):
-        """ Like __setitem__, but it will add ParametSet({}) objects
-        into the namespace tree if needed. """
-
-        split = name.split('.',1)
-        if len(split)==1:
-            dict.__setitem__(self,name,value)
-        else:
-            # nested set
-            try:
-                ps = dict.__getitem__(self,split[0])
-            except KeyError:
-                # setting nested name without parent existing
-                # create parent
-                ps = ParameterSet({})
-                dict.__setitem__(self,split[0],ps)
-                # and try again
-            ps.flat_add(split[1],value)
-
     def __setitem__(self,name,value):
         """ Modified set that detects dots '.' in the names and goes down the
         nested tree to set it """
-
         split = name.split('.',1)
         if len(split)==1:
             dict.__setitem__(self,name,value)
         else:
             # nested set
             dict.__getitem__(self,split[0])[split[1]]=value
-
+   
+    def update(self, E, **F):
+        if hasattr(E, "has_key"):
+            for k in E:
+                self[k] = E[k]
+        else:
+            for (k, v) in E:
+                self[k] = v
+        for k in F:
+            self[k] = F[k]
    
     # should __len__() be the usual dict length, or the flattened length? Probably the former for consistency with dicts
     # can always use len(ps.flatten())
@@ -406,7 +374,7 @@ class ParameterSet(dict):
     def pretty(self, indent='  ', expand_urls=False):
         """
         Return a unicode string representing the structure of the `ParameterSet`.
-        `eval`uating the string should recreate the object.
+        `eval`\uating the string should recreate the object.
         """
         def walk(d, indent, ind_incr):
             s = []
