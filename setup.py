@@ -4,11 +4,11 @@ from distutils.core import setup
 
 setup(
     name = "parameters",
-    version = "0.1.0dev",
+    version = "0.2.0dev",
     packages = ['parameters'],
     author = "The NeuralEnsemble Community",
     author_email = "davison@unic.cnrs-gif.fr",
-    description = "",
+    description = "Management of large, hierarchical parameter sets for modelling and simulation",
     long_description = open("README.txt").read(),
     license = "GPLv2",
     keywords = ('simulation', 'parameters', 'hierarchical'),

@@ -4,7 +4,7 @@ Unit tests for the NeuroTools.random module
 """
 
 import unittest
-from NeuroTools.random import *
+from parameters.random import *
 
 class RandomDistributionTest(unittest.TestCase):
     

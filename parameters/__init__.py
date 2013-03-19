@@ -1,6 +1,6 @@
 """
-NeuroTools.parameters
-=====================
+Parameters
+==========
 
 A module for dealing with model parameters.
 
@@ -14,11 +14,10 @@ ParameterTable - a sub-class of ParameterSet that can represent a table of param
 ParameterSpace - a collection of ParameterSets, representing multiple points in
                  parameter space.
 
-**Imported from NeuroTools.parameters.validators**
+**Imported from validators**
 
 ParameterSchema      - A sub-class of ParameterSet against which other ParameterSets can be validated
-                       against using a Validator as found in the sub-package
-                       NeuroTools.parameters.validators 
+                       against using a Validator as found in the sub-package validators 
 
 CongruencyValidator  - A CongruencyValidator validates a ParameterSet against a ParameterSchema
                        via member "validate(parameter_set,parameter_schema)".
@@ -48,10 +47,12 @@ validators        - A module implementing validation of ParameterSets against Pa
 
 """
 
+from __future__ import absolute_import
 import urllib, copy, warnings, math, urllib2
 from urlparse import urlparse
 from os import environ, path
-from sumatra.external.NeuroTools.random import ParameterDist, GammaDist, UniformDist, NormalDist
+from .random import ParameterDist, GammaDist, UniformDist, NormalDist
+import random
 
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY'] # user has to define it

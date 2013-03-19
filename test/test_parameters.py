@@ -1,17 +1,18 @@
 """
-Unit tests for the NeuroTools.parameters module
+Unit tests for the parameters module
 
 Also see the doctests in doc/parameters.txt
 """
 
-from NeuroTools.parameters import *
-from NeuroTools.random import GammaDist, UniformDist, NormalDist, ParameterDist
+from parameters import *
+from parameters.random import GammaDist, UniformDist, NormalDist, ParameterDist
 import os
 import sys
 import unittest
 import types
 from copy import deepcopy
 import pickle
+import numpy
 
 #class DependenciesTest(unittest.TestCase):
 #    """

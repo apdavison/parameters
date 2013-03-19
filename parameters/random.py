@@ -1,6 +1,6 @@
 """
-NeuroTools.random
-=====================
+parameters.random
+=================
 
 A set of classes representing statistical distributions, with an interface that
 is compatible with the ParameterSpace class in the parameters module.
