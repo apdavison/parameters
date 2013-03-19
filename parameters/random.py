@@ -1,9 +1,4 @@
 """
-This file was originally taken from NeuroTools trunk revision 445.
-It has been modified to make numpy optional (it won't work without numpy, but
-it won't produce ImportErrors either, and will produce sensible error messages
-if numpy-dependent functionality is accessed).
-
 NeuroTools.random
 =====================
 
