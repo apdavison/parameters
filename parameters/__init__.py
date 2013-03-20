@@ -53,6 +53,8 @@ from urlparse import urlparse
 from os import environ, path
 from .random import ParameterDist, GammaDist, UniformDist, NormalDist
 import random
+from copy import copy
+
 
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY'] # user has to define it
@@ -133,13 +135,10 @@ class ParameterRange(Parameter):
         if not isiterable(value):
             raise TypeError,"A ParameterRange value must be iterable"
         Parameter.__init__(self, value.__iter__().next(), units, name)
-        self._iter_values = value.__iter__()
+        self._values = copy(value)
+        self._iter_values = self._values.__iter__()
         if shuffle:
-            self._values = value
             random.shuffle(self._values)
-            #self._values = numpy.random.permutation(value)
-        else:
-            self._values = value
     
     def __repr__(self):
         units_str = ''
