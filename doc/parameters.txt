@@ -13,15 +13,15 @@ It is also often useful to specify an object that generates numerical values or
 strings, such as a random number generator, and treat that object as the
 parameter.
 
-To support all these uses, we define the ``Parameter`` and ``ParameterRange``
-classes, and various subclasses of the ``ParameterDist`` abstract class, such as
-``GammaDist``, ``NormalDist`` and ``UniformDist``.
+To support all these uses, we define the :class:`Parameter` and :class:`ParameterRange`
+classes, and various subclasses of the :class:`ParameterDist` abstract class, such as
+:class:`GammaDist`, :class:`NormalDist` and :class:`UniformDist`.
 
 
-The ``Parameter`` class
------------------------
+The :class:`Parameter` class
+----------------------------
 
-Here are some examples of creating ``Parameter`` objects::
+Here are some examples of creating :class:`Parameter` objects::
 
     >>> i1 = Parameter(3)
     >>> f1 = Parameter(6.2)
@@ -39,21 +39,21 @@ The parameter name, units, value and type can be accessed as attributes::
     >>> s1.name
     'message_to_the_world'
 
-``Parameter`` objects are not hugely useful at the moment. The units are not
-used for checking dimensional consistency, for example, and ``Parameter``
+:class:`Parameter` objects are not hugely useful at the moment. The units are not
+used for checking dimensional consistency, for example, and :class:`Parameter`
 objects are not drop-in replacements for numerical values - you must always use
-the ``value`` attribute to access the value, whereas it might be nice to define,
-for example, a class ``IntegerParameter`` which was a subclass of the built-in
-``int`` type.
+the :attr:`value` attribute to access the value, whereas it might be nice to define,
+for example, a class :class:`IntegerParameter` which was a subclass of the built-in
+:class:`int` type.
 
 
-The ``ParameterRange`` class
-----------------------------
+The :class:`ParameterRange` class
+---------------------------------
 
 When investigating the behaviour of a model or in doing sensitivity analysis, it
 is often useful to run a model several times using a different value for a
-certain parameter each time (also see the ``iter_range_keys()`` and similar
-methods of the ``ParameterSet`` class, below). The ``ParameterRange`` class
+certain parameter each time (also see the :meth:`iter_range_keys()` and similar
+methods of the :class:`ParameterSet` class, below). The :class:`ParameterRange` class
 supports this. Some usage examples::
 
     >>> tau_m_range = ParameterRange([10.0, 15.0, 20.0], "ms", "tau_m")
@@ -67,12 +67,12 @@ supports this. Some usage examples::
     [20.0, 30.0, 40.0]
 
 
-The ``ParameterDist`` classes
------------------------------
+The :class:`ParameterDist` classes
+----------------------------------
 
 As with taking parameter values from a series or range, it is often useful to
 pick values from a particular random distribution. Three classes are available:
-``UniformDist``, ``GammaDist`` and ``NormalDist``. Examples::
+:class:`UniformDist`, :class:`GammaDist` and :class:`NormalDist`. Examples::
     
     >>> ud = UniformDist(min=-1.0, max=1.0)
     >>> gd = GammaDist(mean=0.5, std=1.0)
@@ -84,7 +84,5 @@ pick values from a particular random distribution. Three classes are available:
     >>> nd.next(2)
     array([-76.18506715, -68.71229944]) 
 
-[Note that very similar functionality is available with the ``RandomDistribution``
-class in the `pyNN.random` module. We should look at the best ways to avoid
-duplication].
+
 

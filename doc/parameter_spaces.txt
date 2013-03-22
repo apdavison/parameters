@@ -2,12 +2,12 @@
 Parameter spaces
 ================
 
-The ``ParameterSpace`` class is a subclass of ``ParameterSet`` that is
-allowed to contain ``ParameterRange`` and ``ParameterDist`` objects as
+The :class:`ParameterSpace` class is a subclass of :class:`ParameterSet` that is
+allowed to contain :class:`ParameterRange` and :class:`ParameterDist` objects as
 parameters. This turns the single point in parameter space represented by a
-``ParameterSet`` into a set of points. For example, the following definition
+:class:`ParameterSet` into a set of points. For example, the following definition
 creates a set of six points in parameter space, which can be obtained in turn
-using the ``iter_inner()`` method::
+using the :meth:`iter_inner()` method::
 
     >>> PS = ParameterSpace({
     ...        'x': 999,
@@ -23,7 +23,7 @@ using the ``iter_inner()`` method::
     {'y': 10, 'x': 999, 'z': 1}
     {'y': 20, 'x': 999, 'z': 1}
 
-Putting parameter distribution objects inside a ``ParameterSpace`` allows an
+Putting parameter distribution objects inside a :class:`ParameterSpace` allows an
 essentially infinite number of points to be generated::
 
     >>> PS2 = ParameterSpace({

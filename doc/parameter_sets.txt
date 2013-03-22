@@ -18,7 +18,7 @@ verbose, e.g. ``v1['layer5']['pyramidal']['apical_dend']['na']['gbar']``. A
 second disadvantage is that it is tedious to flatten the hierarchy when
 this becomes necessary, e.g. for serialisation - writing to file, etc.
 
-For these reasons we have created a ``ParameterSet`` class, which:
+For these reasons we have created a :class:`ParameterSet` class, which:
 
   1. allows a more convenient notation;
   
@@ -32,19 +32,19 @@ An example of the notation is ``v1.layer5.pyramidal.apical_dend.na.gbar``, which
 requires only a single `.` for each level in the hierarchy rather than two
 "``'``"s, a "``[``" and a "``]``". This is not much shorter than
 ``v1_layer5_pyramidal_apical_dend_gbar_na`` - the difference is that
-``v1.layer5.pyramidal`` is itself a ``ParameterSet`` object that can be passed
+``v1.layer5.pyramidal`` is itself a :class:`ParameterSet` object that can be passed
 as an argument to the pyramidal cell object, which doesn't care about
 ``v1.layer4.spinystellate``, let alone ``retina.ganglioncell.magno.tau_m``
-(while ``v1_layer5_pyramidal`` is just a ``NameError``).
+(while ``v1_layer5_pyramidal`` is just a :class:`NameError`).
 
 
-The ``ParameterSet`` class
---------------------------
+The :class:`ParameterSet` class
+-------------------------------
 
 Creation
 ~~~~~~~~
 
-``ParameterSet`` objects may be created from a dict::
+:class:`ParameterSet` objects may be created from a dict::
 
     >>> sim_params = ParameterSet({'dt': 0.11, 'tstop': 1000.0})
     
@@ -59,7 +59,7 @@ They may be nested::
     >>> P = ParameterSet({'sim': sim_params, 'network': network_params}, label="my_params")
 
 Note that although we show here only numerical parameter values,
-``Parameter``, ``ParameterRange`` and ``ParameterDist`` objects, as well as
+:class:`Parameter`, :class:`ParameterRange` and :class:`ParameterDist` objects, as well as
 strings, may also be parameter values.
 
 Navigation
@@ -87,7 +87,7 @@ spaces)::
 Viewing and saving
 ~~~~~~~~~~~~~~~~~~
 
-To see the entire parameter set at once, nicely formatted use the ``pretty()``
+To see the entire parameter set at once, nicely formatted use the :meth:`pretty()`
 method::
 
     >>> print P.pretty()
@@ -105,8 +105,8 @@ method::
       },
     }
 
-By default, if the ``ParameterSet`` contains other ``ParameterSet``\s that were
-loaded from URLs, these will be represented with a ``url()`` function in the
+By default, if the :class:`ParameterSet` contains other :class:`ParameterSet`\s that were
+loaded from URLs, these will be represented with a :func:`url()` function in the
 output, but there is also the option to expand all URLs and show the full
 contents::
 
@@ -140,7 +140,7 @@ contents::
       },
     }
 
-If a ``ParameterSet`` was loaded from a URL, it may be modified then saved back
+If a :class:`ParameterSet` was loaded from a URL, it may be modified then saved back
 to the same URL, provided the protocol supports writing::
 
     >>> exc_cell_params.save()
@@ -154,26 +154,26 @@ or saved to a different URL::
 
     >>> exc_cell_params.save(url="file:///tmp/exc_params")
 
-The file format is the same as that produced by the ``pretty()`` method.
+The file format is the same as that produced by the :meth:`pretty()` method.
 
 Copying and converting
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A ``ParameterSet`` can be used simply as a dictionary, but can also be
-converted explicitly to a ``dict`` if required::
+A :class:`ParameterSet` can be used simply as a dictionary, but can also be
+converted explicitly to a :class:`dict` if required::
 
     >>> print sim_params.as_dict()
     {'tstop': 1000.0, 'dt': 0.11}
 
-[need to say something about ``tree_copy()``]
+[need to say something about :meth:`tree_copy()`]
 
 Iteration
 ~~~~~~~~~
 
 There are several different ways to iterate over all or part of the
-``ParameterSet`` object. ``keys()``, ``values()`` and ``items()`` work as for
-``dict``s. For the sake of more readable code, ``names()`` is provided as an
-alias for ``keys()`` and ``parameters()`` as an alias for ``items()``::
+:class:`ParameterSet` object. :meth`keys()`, :meth`values()` and :meth`items()` work as for
+:class:`dict`\s. For the sake of more readable code, :meth:`names()` is provided as an
+alias for :meth:`keys()` and :meth:`parameters()` as an alias for :meth:`items()`::
 
     >>> P.names()
     ['network', 'sim']
@@ -183,7 +183,7 @@ alias for ``keys()`` and ``parameters()`` as an alias for ``items()``::
      ('v_thresh', -57.0), ('v_reset', -70.0), ('v_rest', -70.0)]
     
 To flatten nested parameter sets, i.e., the iterate recursively over all
-branches of the tree, the the ``flatten()`` method returns a ``dict`` with keys
+branches of the tree, the the :meth:`flatten()` method returns a :class:`dict` with keys
 created by joining the names at each hierarchical level with a separator
 character ('.' by default)::
 
@@ -195,9 +195,15 @@ character ('.' by default)::
      'inhibitory_cells.cm': 0.75, 'excitatory_cells.synE.tau': 1.5,
      'excitatory_cells.synE.E': 0.0, 'inhibitory_cells.tau_m': 15.0}
 
-while the ``flat()`` method returns a generator which yields
+while the :meth:`flat()` method returns a generator which yields
 ``(name, value)`` tuples.::
 
     >>> for x in network_params.flat():
     ...   print x
     ...
+
+
+The :class:`ParameterTable` class
+---------------------------------
+
+.. todo:: describe this
