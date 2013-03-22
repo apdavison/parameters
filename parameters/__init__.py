@@ -48,20 +48,38 @@ validators        - A module implementing validation of ParameterSets against Pa
 """
 
 from __future__ import absolute_import
-import urllib, copy, warnings, math, urllib2
-from urlparse import urlparse
+import copy, warnings, math
+try:                
+    from urllib2 import build_opener, install_opener, urlopen, ProxyHandler  # Python 2
+    from urlparse import urlparse
+except ImportError: 
+    from urllib.request import build_opener, install_opener, urlopen, ProxyHandler  # Python 3
+    from urllib.parse import urlparse
+
 from os import environ, path
 from .random import ParameterDist, GammaDist, UniformDist, NormalDist
 import random
 from copy import copy
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
+try:
+    next                  # Python 3
+except NameError:
+    def next(obj):        # Python 2
+        return obj.next()
+    
+
 
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY'] # user has to define it
     ''' next lines are for communication to urllib of proxy information '''
-    proxy_support = urllib2.ProxyHandler({"https":HTTP_PROXY})
-    opener = urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
-    urllib2.install_opener(opener)
+    proxy_support = ProxyHandler({"https":HTTP_PROXY})
+    opener = build_opener(proxy_support, HTTPHandler)
+    install_opener(opener)
 
 def isiterable(x):
     return (hasattr(x,'__iter__') and not isinstance(x, basestring))
@@ -133,8 +151,8 @@ class ParameterRange(Parameter):
 
     def __init__(self, value, units=None, name="", shuffle=False):
         if not isiterable(value):
-            raise TypeError,"A ParameterRange value must be iterable"
-        Parameter.__init__(self, value.__iter__().next(), units, name)
+            raise TypeError("A ParameterRange value must be iterable")
+        Parameter.__init__(self, next(value.__iter__()), units, name)
         self._values = copy(value)
         self._iter_values = self._values.__iter__()
         if shuffle:
@@ -150,10 +168,13 @@ class ParameterRange(Parameter):
         self._iter_values = self._values.__iter__()
         return self._iter_values
 
-    def next(self):
-        self._value = self._iter_values.next()
+    def __next__(self):
+        self._value = next(self._iter_values)
         return self._value
-
+    
+    def next(self):
+        return self.__next__()
+    
     def __len__(self):
         return len(self._values)
 
@@ -191,7 +212,7 @@ class ParameterSet(dict):
     invalid_names = ['parameters', 'names'] # should probably add dir(dict)
     
     @staticmethod
-    def read_from_str(s,update_namespace=None):
+    def read_from_str(s, update_namespace=None):
         """
         ParameterSet definition s should be a Python dict definition
         string, containing objects of types int, float, str, list,
@@ -237,7 +258,7 @@ class ParameterSet(dict):
                 D = eval(s, global_dict)
         except SyntaxError as e:
             raise SyntaxError("Invalid string for ParameterSet definition: %s\n%s" % (s,e))
-        except TypeError, e:
+        except TypeError as e:
             raise SyntaxError("Invalid string for ParameterSet definition: %s" % e)
         return D or {}
     
@@ -264,18 +285,16 @@ class ParameterSet(dict):
         self._url = None
         if isinstance(initialiser, basestring): # url or str
             if path.exists(initialiser):
-                f = open(initialiser)
+                f = open(initialiser, 'r')
                 pstr = f.read()
                 self._url = initialiser
                 f.close()
             else:
                 try:
-                    # can't handle cases where authentication is required
-                    # should be rewritten using urllib2 
-                    f= urllib2.urlopen(initialiser)
-                    pstr = f.read()
+                    f = urlopen(initialiser)
+                    pstr = f.read().decode()
                     self._url = initialiser
-                except IOError, e:
+                except IOError as e:
                     pstr = initialiser
                     self._url = None
                 else:
@@ -284,17 +303,15 @@ class ParameterSet(dict):
         
             # is it a yaml url?
             if self._url:
-                import urlparse, os.path
-                o = urlparse.urlparse(self._url)
-                base,ext = os.path.splitext(o.path)
+                o = urlparse(self._url)
+                base,ext = path.splitext(o.path)
                 if ext in ['.yaml','.yml']:
                     import yaml
                     initialiser = yaml.load(pstr)
                 else:
-                    initialiser = ParameterSet.read_from_str(pstr,update_namespace)
+                    initialiser = ParameterSet.read_from_str(pstr, update_namespace)
             else:
-                initialiser = ParameterSet.read_from_str(pstr,update_namespace)
-
+                initialiser = ParameterSet.read_from_str(pstr, update_namespace)
         
         # By this stage, `initialiser` should be a dict. Iterate through it,
         # copying its contents into the current instance, and replacing dicts by
@@ -433,7 +450,7 @@ class ParameterSet(dict):
     def pretty(self, indent='  ', expand_urls=False):
         """
         Return a unicode string representing the structure of the `ParameterSet`.
-        `eval`\uating the string should recreate the object.
+        evaluating the string should recreate the object.
         """
         def walk(d, indent, ind_incr):
             s = []
@@ -805,7 +822,7 @@ class ParameterTable(ParameterSet):
     
     def column_labels(self):
         """Return a list of column labels."""
-        sample_row = self[self.row_labels()[0]]
+        sample_row = self[list(self.row_labels())[0]]
         return sample_row.keys()
     
     def transpose(self):

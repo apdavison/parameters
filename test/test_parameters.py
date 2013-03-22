@@ -14,6 +14,18 @@ from copy import deepcopy
 import pickle
 import numpy
 
+try:
+    next                  # Python 3
+except NameError:
+    def next(obj):        # Python 2
+        return obj.next()
+
+try:
+    import scipy
+    have_scipy = True
+except ImportError:
+    have_scipy = False
+
 #class DependenciesTest(unittest.TestCase):
 #    """
 #    Uncomment this class and comment-out "from NeuroTools.parameters import *"
@@ -53,7 +65,7 @@ class ParameterRangeTest(unittest.TestCase):
     def test_str_and_repr(self):
         pr = ParameterRange([1,3,5,7,9], units="mV", name="pr")
         self.assertEqual(repr(pr), 'ParameterRange([1, 3, 5, 7, 9], units="mV")')
-        first_value = pr.next()
+        first_value = next(pr)
         self.assertEqual(str(first_value), '1')
         
     def test_invalid_create(self):
@@ -125,7 +137,7 @@ class ParameterSetCreateTest(unittest.TestCase):
 
         ps = ParameterSet
         
-        tf = tempfile.NamedTemporaryFile(suffix='.yaml')
+        tf = tempfile.NamedTemporaryFile(suffix='.yaml', mode='w')
         tf.file.writelines(conf1_str)
         
         tf.file.flush()
@@ -354,6 +366,7 @@ class ParameterSpaceWithDistributionsTest(unittest.TestCase):
     def test_dist_keys(self):
         self.assertEqual(set(self.ps.dist_keys()), set(['g', 'l', 'd.g2']))
 
+    @unittest.skipUnless(have_scipy, "SciPy not available")
     def test_realize_dists_with_copy_True(self):
         gen = self.ps.realize_dists(n=2, copy=True)
         assert type(gen) == types.GeneratorType
@@ -367,6 +380,7 @@ class ParameterSpaceWithDistributionsTest(unittest.TestCase):
         self.assertNotEqual(output[0].l[1], output[1].l[1])
         self.assertEqual(output[0].l[2], output[1].l[2])
 
+    @unittest.skipUnless(have_scipy, "SciPy not available")
     def test_realize_dists_with_copy_False(self):
         gen = self.ps.realize_dists(n=2, copy=False)
         assert type(gen) == types.GeneratorType
