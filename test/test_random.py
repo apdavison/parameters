@@ -3,6 +3,7 @@ Unit tests for the NeuroTools.random module
 
 """
 
+from __future__ import absolute_import
 import unittest
 from parameters.random import *
 

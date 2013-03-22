@@ -4,6 +4,7 @@ Unit tests for the parameters module
 Also see the doctests in doc/parameters.txt
 """
 
+from __future__ import absolute_import
 from parameters import *
 from parameters.random import GammaDist, UniformDist, NormalDist, ParameterDist
 import os

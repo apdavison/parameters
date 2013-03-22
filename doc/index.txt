@@ -25,11 +25,15 @@ parameter sets for complex models.  In particular it provides tools for
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    installation
    parameters
    parameter_sets
    parameter_spaces
    validation
+   changelog
    developers_guide
+
+.. note:: Parameters was previously part of the NeuroTools package, but is now
+          developed and distributed separately.

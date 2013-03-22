@@ -14,6 +14,7 @@ UniformDist - uniform distribution
 
 """
 
+from __future__ import absolute_import
 try:
     import numpy
     import numpy.random

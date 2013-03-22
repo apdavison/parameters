@@ -20,13 +20,13 @@ this becomes necessary, e.g. for serialisation - writing to file, etc.
 
 For these reasons we have created a :class:`ParameterSet` class, which:
 
-  1. allows a more convenient notation;
+1. allows a more convenient notation;
   
-  2. enables subsets of the parameters, lower in the hierarchy, to be passed
-  around by themselves;
+2. enables subsets of the parameters, lower in the hierarchy, to be passed
+   around by themselves;
   
-  3. provides convenient methods for reading from/writing to file and for
-  determining the differences between two different parameter sets.
+3. provides convenient methods for reading from/writing to file and for
+   determining the differences between two different parameter sets.
   
 An example of the notation is ``v1.layer5.pyramidal.apical_dend.na.gbar``, which
 requires only a single `.` for each level in the hierarchy rather than two

@@ -75,6 +75,8 @@ except NameError:
         return obj.next()
 
 
+__version__ = '0.2.0dev'
+
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY']  # user has to define it
     ''' next lines are for communication to urllib of proxy information '''
@@ -553,7 +555,7 @@ class ParameterSet(dict):
 
         """
         if format == 'latex':
-            from export import parameters_to_latex
+            from .export import parameters_to_latex
             parameters_to_latex(filename, self, **kwargs)
 
 

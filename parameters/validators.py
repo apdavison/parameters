@@ -31,7 +31,7 @@ See also: parameters
 
 """
 
-
+from __future__ import absolute_import
 import yaml
 from parameters import ParameterSet
 import parameters
