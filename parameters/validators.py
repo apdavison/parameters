@@ -37,7 +37,6 @@ from parameters import ParameterSet
 import parameters
 
 
-
 class SchemaBase(object):
     """ The base class of all "active" Schema objects to be placed in a ParameterSchema.
 
@@ -55,8 +54,8 @@ class SchemaBase(object):
 
     def __repr__(self):
         cls = self.__class__
-        return '.'.join([cls.__module__,cls.__name__])+'()'
-    
+        return '.'.join([cls.__module__, cls.__name__])+'()'
+
 
 class Subclass(SchemaBase):
     """
@@ -65,7 +64,7 @@ class Subclass(SchemaBase):
 
     See also: SchemaBase
     """
-    
+
     def __init__(self, type=None):
         self.type = type
 
@@ -74,13 +73,14 @@ class Subclass(SchemaBase):
 
     def __repr__(self):
         cls = self.__class__
-        return '.'.join([cls.__module__,cls.__name__])+'(type=%s)' % (self.type.__name__)
+        return '.'.join([cls.__module__, cls.__name__])+'(type=%s)' % (self.type.__name__)
 
-    def __eq__(self,x):
-        if isinstance(x,Subclass):
+    def __eq__(self, x):
+        if isinstance(x, Subclass):
             return self.type == x.type
         else:
             return False
+
 
 class Eval(SchemaBase):
     """
@@ -91,7 +91,6 @@ class Eval(SchemaBase):
     See also: SchemaBase
     """
 
-    
     def __init__(self, expr, var='leaf'):
         self.var = var
         self.expr = expr
@@ -99,26 +98,26 @@ class Eval(SchemaBase):
     def validate(self, leaf):
         l = {}
         l[self.var] = leaf
-        return eval(self.expr,{},l)
+        return eval(self.expr, {}, l)
 
     def __repr__(self):
         cls = self.__class__
-        return '.'.join([cls.__module__,cls.__name__])+'(%s,var=%s)' % (self.expr,self.var)
+        return '.'.join([cls.__module__, cls.__name__])+'(%s,var=%s)' % (self.expr, self.var)
 
-    def __eq__(self,x):
-        if isinstance(x,Eval):
+    def __eq__(self, x):
+        if isinstance(x, Eval):
             return self.expr == x.expr and self.var == x.var
         else:
             return False
 
 
-
 # add all schema checkers to this list
-schema_checkers = [Subclass,Eval]
+schema_checkers = [Subclass, Eval]
 # create a namespace of schema_checkers
 schema_checkers_namespace = {}
 for x in schema_checkers:
     schema_checkers_namespace[x.__class__.__name__] = x
+
 
 class ParameterSchema(ParameterSet):
     """
@@ -137,20 +136,20 @@ class ParameterSchema(ParameterSet):
     *unimplemented* Url()
     *unimplemented* File()
     *unimplemented* FileExists()
-    
+
     etc.
 
     example:
 
     >>> schema = ParameterSchema({'age': 0, 'height': Subclass(float)})
-    # is equivalent to 
+    # is equivalent to
     >>> schema = ParameterSchema({'age': Subclass(int), 'height': Subclass(float)})
 
     See also: SchemaBase, Eval, Subclass
-    
+
     """
 
-    def __init__(self,initializer):
+    def __init__(self, initializer):
         import types
         ps = initializer
 
@@ -158,18 +157,16 @@ class ParameterSchema(ParameterSet):
         # it is not one already
         if not isinstance(ps, ParameterSet):
             # create ParameterSet, but allowing SchemaBase derived objects
-            ps = ParameterSet(ps,update_namespace=schema_checkers_namespace)
+            ps = ParameterSet(ps, update_namespace=schema_checkers_namespace)
 
-        # convert each element 
+        # convert each element
         for x in ps.flat():
             key = x[0]
             value = x[1]
             if isinstance(value, SchemaBase):
-                self.flat_add(key,value)
+                self.flat_add(key, value)
             else:
-                self.flat_add(key,Subclass(type=type(value)))
-
-
+                self.flat_add(key, Subclass(type=type(value)))
 
 
 class ValidationError(Exception):
@@ -178,14 +175,14 @@ class ValidationError(Exception):
     See also: CongruencyValidator, ParameterSchema
 
     """
-    
-    def __init__(self, path='',schema_base=None, parameter=None ):
+
+    def __init__(self, path='', schema_base=None, parameter=None):
         self.path = path
         self.schema_base = schema_base
         self.parameter = parameter
+
     def __str__(self):
         return 'validation error @ %s: parameter "%s" failed against schema: %s' % (self.path, self.parameter, self.schema_base)
-    
 
 
 class CongruencyValidator(object):
@@ -196,7 +193,7 @@ class CongruencyValidator(object):
 
     The CongruencyValidator expects all names defined in the schema to be present in the parameter set
     and vice-versa, and will run validation for each item in the namespace tree.
-    
+
     The validation functionality is available via the "validate" member
     CongruencyValidator.validate(parameter_set, parameter_schema)
 
@@ -207,7 +204,7 @@ class CongruencyValidator(object):
     try:
        validator.validate(parameter_set,parameter_schema)
     except ValidationError, e:
-       
+
 
     See also: NeuroTools.parameters.ParameterSet, ParameterSchema
 
@@ -216,11 +213,10 @@ class CongruencyValidator(object):
     def __init__(self):
         pass
 
-
     def validate(self, parameter_set, parameter_schema):
         """
         CongruencyValidator.validate(parameter_set, parameter_schema)
-        
+
         validates a ParameterSet against a ParameterSchema
         either returning True, or raising a ValidationError with the path and SchemaBase subclass
         for which validation failed.
@@ -239,29 +235,26 @@ class CongruencyValidator(object):
         ps_keys = set()
         schema_keys = set()
 
-        for path,sb in schema.flat():
+        for path, sb in schema.flat():
             try:
                 val = ps[path]
             except KeyError:
-                e = ValidationError(path=path,schema_base=sb,parameter='<MISSING>')
-                raise e
+                raise ValidationError(path=path, schema_base=sb,
+                                      parameter='<MISSING>')
             if not sb.validate(val):
-                e = ValidationError(path=path,schema_base=sb,parameter=val)
-                raise e
+                raise ValidationError(path=path, schema_base=sb, parameter=val)
 
-        
-        for path,val in ps.flat():
+        for path, val in ps.flat():
             try:
                 sb = schema[path]
             except KeyError:
-                e = ValidationError(path=path,schema_base='<MISSING>',parameter=val)
-                raise e
-            
-        return True
-        
-            
+                raise ValidationError(path=path, schema_base='<MISSING>',
+                                      parameter=val)
 
-def congruent_dicts(template, candidate, subset=False,parent_path=''):
+        return True
+
+
+def congruent_dicts(template, candidate, subset=False, parent_path=''):
     """ returns True if d1 and d2 have same key heirarchy, otherwise False
 
     if subset=True, the key heirarchy of d2 maybe a subset
@@ -272,12 +265,11 @@ def congruent_dicts(template, candidate, subset=False,parent_path=''):
 
     # if one is a dict, and the other not, return False
 
-    types = (isinstance(dt,dict), isinstance(dc,dict))
+    types = (isinstance(dt, dict), isinstance(dc, dict))
 
     # both are not dicts, return True (for recursion)
-    if all([type==False for type in types]):
+    if all([type == False for type in types]):
         return True
-
 
     if all(types):
         # both are dicts
@@ -298,29 +290,24 @@ def congruent_dicts(template, candidate, subset=False,parent_path=''):
             return False
 
         # check that all sub dicts are congruent.
-        subs_congruent = [congruent_dicts(template[key],candidate[key],subset) for key in keys_intersection]
+        subs_congruent = [congruent_dicts(template[key], candidate[key], subset)
+                          for key in keys_intersection]
         return all(subs_congruent)
-        
+
     else:
         # inhomogeneousisms are underway
         # if subset, then return True if d1 is a dict (then d2 is not a dict)
-        if subset and types[0]==True:
+        if subset and types[0]:
             return True
-            
+
         # one is a dict, and the other not.
         return False
-        
 
 
-# Add to parameters on import    
+# Add to parameters on import
 parameters.ParameterSchema = ParameterSchema
 parameters.Subclass = Subclass
 parameters.Eval = Eval
 parameters.SchemaBase = SchemaBase
 parameters.CongruencyValidator = CongruencyValidator
 parameters.ValidationError = ValidationError
-
-
-
-
-    
