@@ -33,6 +33,7 @@ Contents:
    parameter_spaces
    validation
    changelog
+   reference
    developers_guide
 
 .. note:: Parameters was previously part of the NeuroTools package, but is now

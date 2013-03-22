@@ -201,17 +201,18 @@ class ParameterSet(dict):
     """
     A class to manage hierarchical parameter sets.
 
-    Usage example:
-    >>> sim_params = ParameterSet({'dt': 0.1, 'tstop': 1000.0})
-    >>> exc_cell_params = ParameterSet("http://neuralensemble.org/svn/NeuroTools/example.params")
-    >>> inh_cell_params = ParameterSet({'tau_m': 15.0, 'cm': 0.5})
-    >>> network_params = ParameterSet({'excitatory_cells': exc_cell_params, 'inhibitory_cells': inh_cell_params})
-    >>> P = ParameterSet({'sim': sim_params, 'network': network_params})
-    >>> P.sim.dt
-    0.1
-    >>> P.network.inhibitory_cells.tau_m
-    15.0
-    >>> print P.pretty()
+    Usage example::
+    
+        >>> sim_params = ParameterSet({'dt': 0.1, 'tstop': 1000.0})
+        >>> exc_cell_params = ParameterSet("http://neuralensemble.org/svn/NeuroTools/example.params")
+        >>> inh_cell_params = ParameterSet({'tau_m': 15.0, 'cm': 0.5})
+        >>> network_params = ParameterSet({'excitatory_cells': exc_cell_params, 'inhibitory_cells': inh_cell_params})
+        >>> P = ParameterSet({'sim': sim_params, 'network': network_params})
+        >>> P.sim.dt
+        0.1
+        >>> P.network.inhibitory_cells.tau_m
+        15.0
+        >>> print P.pretty()
 
     """
 
@@ -222,23 +223,19 @@ class ParameterSet(dict):
     @staticmethod
     def read_from_str(s, update_namespace=None):
         """
-        ParameterSet definition s should be a Python dict definition
-        string, containing objects of types int, float, str, list,
-        dict plus the classes defined in this module, `Parameter`,
+        `ParameterSet` definition `s` should be a Python dict definition
+        string, containing objects of types `int`, `float`, `str`, `list`,
+        `dict` plus the classes defined in this module, `Parameter`,
         `ParameterRange`, etc.  No other object types are allowed,
-        except the function url('some_url'), e.g.: { 'a' : {'A': 3,
-        'B': 4}, 'b' : [1,2,3], 'c' : 'hello world', 'd' :
-        url('http://example.com/my_cool_parameter_set') }
+        except the function url('some_url'), e.g.::
+        
+            { 'a' : {'A': 3, 'B': 4},
+              'b' : [1,2,3],
+              'c' : 'hello world',
+              'd' : url('http://example.com/my_cool_parameter_set') }
 
         This is largely the JSON (www.json.org) format, but with
-        extra keywords in the Namespace such as ParameterRange, GammaDist, etc.
-
-        Python also supports specifying dictionaries as follows:
-
-        dict(x=1,y=2)
-
-        But usage of such un-JSON-ly idioms should likely be discouraged...
-
+        extra keywords in the namespace such as `ParameterRange`, `GammaDist`, etc.
         """
         global_dict = dict(url=ParameterSet, ParameterSet=ParameterSet)
         global_dict.update(dict(ParameterRange=ParameterRange,
@@ -273,6 +270,7 @@ class ParameterSet(dict):
 
     @staticmethod
     def check_validity(k):
+        """docstring missing"""
         if k in ParameterSet.invalid_names:
             raise Exception("'%s' is not allowed as a parameter name." % k)
 
@@ -384,7 +382,7 @@ class ParameterSet(dict):
         return dict.__getitem__(self, split[0])[split[1]]
 
     def flat_add(self, name, value):
-        """ Like __setitem__, but it will add ParametSet({}) objects
+        """ Like `__setitem__`, but it will add `ParameterSet({})` objects
         into the namespace tree if needed. """
 
         split = name.split('.', 1)
@@ -413,6 +411,7 @@ class ParameterSet(dict):
             dict.__getitem__(self, split[0])[split[1]] = value
 
     def update(self, E, **F):
+        """docstring missing"""
         if hasattr(E, "has_key"):
             for k in E:
                 self[k] = E[k]
@@ -483,7 +482,7 @@ class ParameterSet(dict):
         return '{\n' + walk(self, indent, indent) + '\n}'
 
     def tree_copy(self):
-        """ returns a copy of the ParameterSet tree structure.
+        """Return a copy of the `ParameterSet` tree structure.
         Nodes are not copied, but re-referenced."""
 
         tmp = ParameterSet({})
@@ -499,7 +498,7 @@ class ParameterSet(dict):
         return tmp
 
     def as_dict(self):
-        """ returns a copy of the ParameterSet tree structure
+        """Return a copy of the `ParameterSet` tree structure
         as a nested dictionary"""
 
         tmp = {}
@@ -515,7 +514,7 @@ class ParameterSet(dict):
 
     def __sub__(self, other):
         """
-        Return the difference between this ParameterSet and another.
+        Return the difference between this `ParameterSet` and another.
         Not yet properly implemented.
         """
         self_keys = set(self)
@@ -542,8 +541,8 @@ class ParameterSet(dict):
 
     def _is_space(self):
         """
-        Checks for the presence of ParameterRanges or ParameterDists to
-        determine if this is a ParameterSet or a ParameterSpace.
+        Check for the presence of `ParameterRanges` or `ParameterDists` to
+        determine if this is a `ParameterSet` or a `ParameterSpace`.
         """
         for k, v in self.flat():
             if isinstance(v, ParameterRange) or isinstance(v, ParameterDist):
@@ -552,7 +551,7 @@ class ParameterSet(dict):
 
     def export(self, filename, format='latex', **kwargs):
         """
-
+        docstring missing
         """
         if format == 'latex':
             from .export import parameters_to_latex
@@ -560,13 +559,13 @@ class ParameterSet(dict):
 
 
 class ParameterSpace(ParameterSet):
-    """A collection of ParameterSets, representing multiple points in
-    parameter space. Created by putting ParameterRange and/or ParameterDist
-    objects within a ParameterSet."""
+    """A collection of `ParameterSets`, representing multiple points in
+    parameter space. Created by putting `ParameterRange` and/or `ParameterDist`
+    objects within a `ParameterSet`."""
 
     def iter_range_key(self, range_key):
-        """ An iterator of the ParameterSpace which yields the
-        ParameterSet with the ParameterRange given by key replaced with
+        """ An iterator of the `ParameterSpace` which yields the
+        `ParameterSet` with the `ParameterRange` given by `range_key` replaced with
         each of its values"""
 
         tmp = self.tree_copy()
@@ -575,15 +574,15 @@ class ParameterSpace(ParameterSet):
             yield tmp
 
     def iter_inner_range_keys(self, keys, copy=False):
-        """ An iterator of the ParameterSpace which yields
-        ParameterSets with all combinations of ParameterRange elements
-        which are given by the keys list
+        """ An iterator of the `ParameterSpace` which yields
+        `ParameterSets` with all combinations of `ParameterRange` elements
+        which are given by the `keys` list.
 
         Note: each newly yielded value is one and the same object
         so storing the returned values results in a collection
         of many of the lastly yielded object.
 
-        copy=True causes each yielded object to be a newly
+        `copy=True` causes each yielded object to be a newly
         created object, but be careful because this is
         spawning many dictionaries!
 
@@ -616,18 +615,17 @@ class ParameterSpace(ParameterSet):
                     yield tmp_copy
 
     def range_keys(self):
-        """ returns the list of keys for those elements which are ParameterRanges """
+        """Return the list of keys for those elements which are `ParameterRanges`."""
         return [key for key, value in self.flat() if isinstance(value, ParameterRange)]
 
     def iter_inner(self, copy=False):
-        """An iterator of the ParameterSpace which yields
-        ParameterSets with all combinations of ParameterRange elements"""
-
+        """An iterator of the `ParameterSpace` which yields
+        `ParameterSets` with all combinations of `ParameterRange` elements"""
         return self.iter_inner_range_keys(self.range_keys(), copy)
 
     def num_conditions(self):
-        """Returns the number of ParameterSets that will be returned by the
-        iter_inner() method."""
+        """Return the number of `ParameterSets` that will be returned by the
+        `iter_inner()` method."""
         # Not properly tested
         n = 1
         for key in self.range_keys():
@@ -635,16 +633,16 @@ class ParameterSpace(ParameterSet):
         return n
 
     def dist_keys(self):
-        """ returns the list of keys for those elements which are ParameterDists """
+        """Return the list of keys for those elements which are `ParameterDists`."""
         def is_or_contains_dist(value):
             return isinstance(value, ParameterDist) or (
                 isiterable(value) and contains_instance(value, ParameterDist))
         return [key for key, value in self.flat() if is_or_contains_dist(value)]
 
     def realize_dists(self, n=1, copy=False):
-        """For each ParameterDist, realize the distribution and yield the result
+        """For each `ParameterDist`, realize the distribution and yield the result.
 
-        If copy==True, causes each yielded object to be a newly
+        If `copy==True`, causes each yielded object to be a newly
         created object, but be careful because this is
         spawning many dictionaries!"""
         def next(item, n):
@@ -683,8 +681,8 @@ class ParameterSpace(ParameterSet):
 
     def parameter_space_dimension_labels(self):
         """
-        returns the dimentions and labels of the keys for those elements which are ParameterRanges
-        range_keys are sorted to ensure same ordering each time.
+        Return the dimensions and labels of the keys for those elements which are `ParameterRanges`.
+        `range_keys` are sorted to ensure the same ordering each time.
         """
         range_keys = self.range_keys()
         range_keys.sort()
@@ -699,22 +697,22 @@ class ParameterSpace(ParameterSet):
 
     def parameter_space_index(self, current_experiment):
         """
-        returns the index of the current experiment in the dimension of the parameter space
+        Return the index of the current experiment in the dimension of the parameter space
         i.e. parameter space dimension: [2,3]
         i.e. index: (1,0)
 
-        Example:
+        Example::
 
-        p = ParameterSet({})
-        p.b = ParameterRange([1,2,3])
-        p.a = ParameterRange(['p','y','t','h','o','n'])
+            p = ParameterSet({})
+            p.b = ParameterRange([1,2,3])
+            p.a = ParameterRange(['p','y','t','h','o','n'])
 
-        results_dim, results_label = p.parameter_space_dimension_labels()
+            results_dim, results_label = p.parameter_space_dimension_labels()
 
-        results = numpy.empty(results_dim)
-        for experiment in p.iter_inner():
-            index = p.parameter_space_index(experiment)
-            results[index] = 2.
+            results = numpy.empty(results_dim)
+            for experiment in p.iter_inner():
+                index = p.parameter_space_index(experiment)
+                results[index] = 2.
 
         """
         index = []
@@ -732,16 +730,16 @@ class ParameterSpace(ParameterSet):
 
     def get_ranges_values(self):
         """
-        Returns a dict with the keys and values of the parameters with ParameterRanges
+        Return a dict with the keys and values of the parameters with `ParameterRanges`
 
-        Example:
+        Example::
 
-        >>> p = ParameterSpace({})
-        >>> p.b = ParameterRange([1,2,3])
-        >>> p.a = ParameterRange(['p','y','t','h','o','n'])
-        >>> data = p.get_ranges_values()
-        >>> data
-        {'a': ['p', 'y', 't', 'h', 'o', 'n'], 'b': [1, 2, 3]}
+            >>> p = ParameterSpace({})
+            >>> p.b = ParameterRange([1,2,3])
+            >>> p.a = ParameterRange(['p','y','t','h','o','n'])
+            >>> data = p.get_ranges_values()
+            >>> data
+            {'a': ['p', 'y', 't', 'h', 'o', 'n'], 'b': [1, 2, 3]}
 
         """
         data = {}
@@ -768,11 +766,11 @@ def string_table(tablestring):
 
 class ParameterTable(ParameterSet):
     """
-    A sub-class of ParameterSet that can represent a table of parameters.
+    A sub-class of `ParameterSet` that can represent a table of parameters.
 
     i.e., it is limited to one-level of nesting, and each sub-dict must have
     the same keys. In addition to the possible initialisers for ParameterSet,
-    a ParameterTable can be initialised from a multi-line string, e.g.
+    a ParameterTable can be initialised from a multi-line string, e.g.::
 
         >>> pt = ParameterTable('''
         ...     #       col1    col2    col3
@@ -814,24 +812,24 @@ class ParameterTable(ParameterSet):
         """
         Checks that the contents actually define a table, i.e.
         one level of nesting and each sub-dict has the same keys.
-        Raises an Exception is these requirements are violated.
+        Raises an `Exception` if these requirements are violated.
         """
         # to be implemented
         pass
 
     def row(self, row_label):
-        """Returns a ParameterSet object containing the requested row."""
+        """Return a `ParameterSet` object containing the requested row."""
         return self[row_label]
 
     def column(self, column_label):
-        """Returns a ParameterSet object containing the requested column."""
+        """Return a `ParameterSet` object containing the requested column."""
         col = {}
         for row_label, row in self.rows():
             col[row_label] = row[column_label]
         return ParameterSet(col)
 
     def columns(self):
-        """Return a list of (column_label, column) pairs, as 2-tuples."""
+        """Return a list of `(column_label, column)` pairs, as 2-tuples."""
         return [(column_label, self.column(column_label)) for column_label in self.column_labels()]
 
     def column_labels(self):

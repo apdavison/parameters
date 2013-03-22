@@ -2,6 +2,11 @@
 Parameter sets
 ==============
 
+.. testsetup::
+
+   from parameters import ParameterSet
+
+
 A problem with parameter sets for large-scale, detailed models is that the list
 of parameters gets very long and unwieldy, and due to the typically hierarchical
 nature of such models, the individual parameter names can also get very long,
@@ -44,15 +49,21 @@ The :class:`ParameterSet` class
 Creation
 ~~~~~~~~
 
-:class:`ParameterSet` objects may be created from a dict::
+:class:`ParameterSet` objects may be created from a dict:
+
+.. doctest::
 
     >>> sim_params = ParameterSet({'dt': 0.11, 'tstop': 1000.0})
     
-or loaded from a URL::
+or loaded from a URL:
+
+.. doctest::
 
     >>> exc_cell_params = ParameterSet("https://neuralensemble.org/svn/NeuroTools/trunk/doc/example.param")
 
-They may be nested::
+They may be nested:
+
+.. doctest::
 
     >>> inh_cell_params = ParameterSet({'tau_m': 15.0, 'cm': 0.5})
     >>> network_params = ParameterSet({'excitatory_cells': exc_cell_params, 'inhibitory_cells': inh_cell_params})
@@ -65,7 +76,9 @@ strings, may also be parameter values.
 Navigation
 ~~~~~~~~~~
     
-Individual parameters may be accessed/set using dot notation::
+Individual parameters may be accessed/set using dot notation:
+
+.. doctest::
 
     >>> P.sim.dt
     0.11
@@ -73,13 +86,17 @@ Individual parameters may be accessed/set using dot notation::
     15.0
     >>> P.network.inhibitory_cells.cm = 0.75
     
-or the usual dictionary access notation::
+or the usual dictionary access notation:
+
+.. doctest::
 
     >>> P['network']['inhibitory_cells']['cm']
     0.75
     
 or mixing the two (which may be required if some of the parameter names contain
-spaces)::
+spaces):
+
+.. doctest::
 
     >>> P['network'].excitatory_cells['tau_m']
     10.0
@@ -88,12 +105,14 @@ Viewing and saving
 ~~~~~~~~~~~~~~~~~~
 
 To see the entire parameter set at once, nicely formatted use the :meth:`pretty()`
-method::
+method:
+
+.. doctest::
 
     >>> print P.pretty()
     {
       "network": {
-        "excitatory_cells": url("https://neuralensemble.org/svn/NeuroTools/trunk/doc/example.param")
+        "excitatory_cells": url("https://neuralensemble.org/svn/NeuroTools/trunk/doc/example.param"),
         "inhibitory_cells": {
           "tau_m": 15.0,
           "cm": 0.75,
@@ -108,7 +127,9 @@ method::
 By default, if the :class:`ParameterSet` contains other :class:`ParameterSet`\s that were
 loaded from URLs, these will be represented with a :func:`url()` function in the
 output, but there is also the option to expand all URLs and show the full
-contents::
+contents:
+
+.. doctest::
 
     >>> print P.pretty(expand_urls=True)
     {
@@ -141,7 +162,9 @@ contents::
     }
 
 If a :class:`ParameterSet` was loaded from a URL, it may be modified then saved back
-to the same URL, provided the protocol supports writing::
+to the same URL, provided the protocol supports writing:
+
+.. doctest::
 
     >>> exc_cell_params.save()
     Traceback (most recent call last):
@@ -150,7 +173,9 @@ to the same URL, provided the protocol supports writing::
         raise Exception("Saving using the %s protocol is not implemented" % scheme)
     Exception: Saving using the https protocol is not implemented
     
-or saved to a different URL::
+or saved to a different URL:
+
+.. doctest::
 
     >>> exc_cell_params.save(url="file:///tmp/exc_params")
 
@@ -160,7 +185,9 @@ Copying and converting
 ~~~~~~~~~~~~~~~~~~~~~~
 
 A :class:`ParameterSet` can be used simply as a dictionary, but can also be
-converted explicitly to a :class:`dict` if required::
+converted explicitly to a :class:`dict` if required:
+
+.. doctest::
 
     >>> print sim_params.as_dict()
     {'tstop': 1000.0, 'dt': 0.11}
@@ -173,7 +200,10 @@ Iteration
 There are several different ways to iterate over all or part of the
 :class:`ParameterSet` object. :meth`keys()`, :meth`values()` and :meth`items()` work as for
 :class:`dict`\s. For the sake of more readable code, :meth:`names()` is provided as an
-alias for :meth:`keys()` and :meth:`parameters()` as an alias for :meth:`items()`::
+alias for :meth:`keys()` and :meth:`parameters()` as an alias for :meth:`items()`:
+
+.. doctest::
+   :options: +NORMALIZE_WHITESPACE
 
     >>> P.names()
     ['network', 'sim']
@@ -185,7 +215,10 @@ alias for :meth:`keys()` and :meth:`parameters()` as an alias for :meth:`items()
 To flatten nested parameter sets, i.e., the iterate recursively over all
 branches of the tree, the the :meth:`flatten()` method returns a :class:`dict` with keys
 created by joining the names at each hierarchical level with a separator
-character ('.' by default)::
+character ('.' by default):
+
+.. doctest::
+   :options: +NORMALIZE_WHITESPACE
 
     >>> network_params.flatten()
     {'excitatory_cells.synI.E': -75.0, 'excitatory_cells.v_rest': -70.0,
@@ -196,11 +229,24 @@ character ('.' by default)::
      'excitatory_cells.synE.E': 0.0, 'inhibitory_cells.tau_m': 15.0}
 
 while the :meth:`flat()` method returns a generator which yields
-``(name, value)`` tuples.::
+``(name, value)`` tuples.:
+
+.. doctest::
 
     >>> for x in network_params.flat():
     ...   print x
-    ...
+    ('excitatory_cells.tau_refrac', 0.11)
+    ('excitatory_cells.tau_m', 10.0)
+    ('excitatory_cells.cm', 0.25)
+    ('excitatory_cells.synI.tau', 10.0)
+    ('excitatory_cells.synI.E', -75.0)
+    ('excitatory_cells.synE.tau', 1.5)
+    ('excitatory_cells.synE.E', 0.0)
+    ('excitatory_cells.v_thresh', -57.0)
+    ('excitatory_cells.v_reset', -70.0)
+    ('excitatory_cells.v_rest', -70.0)
+    ('inhibitory_cells.tau_m', 15.0)
+    ('inhibitory_cells.cm', 0.75)
 
 
 The :class:`ParameterTable` class

@@ -242,3 +242,5 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 todo_include_todos = True
+
+doctest_test_doctest_blocks = 'default'

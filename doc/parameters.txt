@@ -2,6 +2,10 @@
 Parameters
 ==========
 
+.. testsetup::
+
+   from parameters import Parameter, ParameterRange
+
 At their simplest, individual parameters consist of a name and a value. The
 value is either a simple type such as a numerical value or a string, or an
 aggregate of such simple types, such as a set, list or array.
@@ -21,14 +25,18 @@ classes, and various subclasses of the :class:`ParameterDist` abstract class, su
 The :class:`Parameter` class
 ----------------------------
 
-Here are some examples of creating :class:`Parameter` objects::
+Here are some examples of creating :class:`Parameter` objects:
+
+.. doctest::
 
     >>> i1 = Parameter(3)
     >>> f1 = Parameter(6.2)
     >>> f2 = Parameter(-65.3, "mV")
     >>> s1 = Parameter("hello", name="message_to_the_world")
     
-The parameter name, units, value and type can be accessed as attributes::
+The parameter name, units, value and type can be accessed as attributes:
+
+.. doctest::
 
     >>> i1.value
     3
@@ -54,7 +62,9 @@ When investigating the behaviour of a model or in doing sensitivity analysis, it
 is often useful to run a model several times using a different value for a
 certain parameter each time (also see the :meth:`iter_range_keys()` and similar
 methods of the :class:`ParameterSet` class, below). The :class:`ParameterRange` class
-supports this. Some usage examples::
+supports this. Some usage examples:
+
+.. doctest::
 
     >>> tau_m_range = ParameterRange([10.0, 15.0, 20.0], "ms", "tau_m")
     >>> tau_m_range.name

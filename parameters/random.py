@@ -30,6 +30,9 @@ import math
 
 
 class ParameterDist(object):
+    """
+    missing docstring
+    """
 
     def __init__(self, **params):
         self.params = params
@@ -48,6 +51,7 @@ class ParameterDist(object):
             'This is an abstract base class and cannot be used directly')
 
     def from_stats(self, vals, bias=0.0, expand=1.0):
+        """missing docstring"""
         if have_numpy:
             self.__init__(mean=numpy.mean(vals)+bias,
                           std=numpy.std(vals)*expand)
@@ -70,9 +74,10 @@ class GammaDist(ParameterDist):
     gamma.pdf(x,a,b) = x**(a-1)*exp(-x/b)/gamma(a)/b**a
 
     Yields strictly positive numbers.
-    Generally the distribution is implemented by scipy.stats.gamma.pdf(x/b,a)/b
-    For more info, in ipython type:
-    >>> ? scipy.stats.gamma
+    Generally the distribution is implemented by `scipy.stats.gamma.pdf(x/b,a)/b`
+    For more info, in ipython type::
+
+        >>> ? scipy.stats.gamma
 
     """
 

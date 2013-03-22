@@ -2,12 +2,18 @@
 Parameter spaces
 ================
 
+.. testsetup::
+
+   from parameters import ParameterSpace, ParameterRange
+
 The :class:`ParameterSpace` class is a subclass of :class:`ParameterSet` that is
 allowed to contain :class:`ParameterRange` and :class:`ParameterDist` objects as
 parameters. This turns the single point in parameter space represented by a
 :class:`ParameterSet` into a set of points. For example, the following definition
 creates a set of six points in parameter space, which can be obtained in turn
-using the :meth:`iter_inner()` method::
+using the :meth:`iter_inner()` method:
+
+.. doctest::
 
     >>> PS = ParameterSpace({
     ...        'x': 999,
