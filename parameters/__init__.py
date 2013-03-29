@@ -211,7 +211,7 @@ def load_parameters(parameter_url,modified_parameters):
     parameters = ParameterSet(parameter_url)
     parameters.replace_values(**modified_parameters)
     parameters.replace_references()
-
+    return parameters
 
 
 # --- ParameterSet and subclasses ----------------------------------------
