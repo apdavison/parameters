@@ -194,9 +194,27 @@ class ParameterRange(Parameter):
         else:
             return False
 
+# --- ReferenceParameter
+"""
+This class just provides place-holder for a reference parameter that will be later replaced with the content 
+of the parameter tree pointed to by the reference.
+"""
+class ParameterReference(object):
+      def __init__(self,reference):
+          object.__init__(self)  
+          self.reference_path = reference
+
+
+# This is a function that should be used to load ParameterSet from url
+
+def load_parameters(parameter_url,modified_parameters):
+    parameters = ParameterSet(parameter_url)
+    parameters.replace_values(**modified_parameters)
+    parameters.replace_references()
+
+
 
 # --- ParameterSet and subclasses ----------------------------------------
-
 class ParameterSet(dict):
     """
     A class to manage hierarchical parameter sets.
@@ -227,17 +245,18 @@ class ParameterSet(dict):
         string, containing objects of types `int`, `float`, `str`, `list`,
         `dict` plus the classes defined in this module, `Parameter`,
         `ParameterRange`, etc.  No other object types are allowed,
-        except the function url('some_url'), e.g.::
+        except the function url('some_url') or ref('point.delmitted.path') e.g.::
         
             { 'a' : {'A': 3, 'B': 4},
               'b' : [1,2,3],
               'c' : 'hello world',
-              'd' : url('http://example.com/my_cool_parameter_set') }
+              'd' : url('http://example.com/my_cool_parameter_set')
+              'e' : ref('level1_param_name.level2_param_name.level3_param_name') }
 
         This is largely the JSON (www.json.org) format, but with
         extra keywords in the namespace such as `ParameterRange`, `GammaDist`, etc.
         """
-        global_dict = dict(url=ParameterSet, ParameterSet=ParameterSet)
+        global_dict = dict(ref=ParameterReference,url=ParameterSet, ParameterSet=ParameterSet)
         global_dict.update(dict(ParameterRange=ParameterRange,
                                 ParameterTable=ParameterTable,
                                 GammaDist=GammaDist,
@@ -556,7 +575,54 @@ class ParameterSet(dict):
         if format == 'latex':
             from .export import parameters_to_latex
             parameters_to_latex(filename, self, **kwargs)
-
+    
+    def replace_references(self):
+        for s,k,v in self.find_references():
+            #ps,pn = self.find_path(v.reference_path)
+            if isinstance(self[v.reference_path],ParameterSet):
+                s[k] = self[v.reference_path].tree_copy()
+            else:
+                s[k] = self[v.reference_path]
+        
+    def find_references(self):
+        l = []
+        for k,v in self.iteritems():
+            if isinstance(v,ParameterReference):
+               print v
+               l += [(self,k,v)]
+            elif isinstance(v,ParameterSet):   
+               l += v.find_references()
+        return l
+    
+    def find_path(path):
+        """
+        Assumes path being a . delimeted path to a parameter in the parameter tree rooted in this ParameterSet.
+        It returns tuple (ps,k) where the ps is the ParameterSet containing the parameter, and k is the parameter name.
+        """
+        s = path.split('.')
+        if len(s) == 1:
+           if self.has_key(s[0]):
+              return (self,s[0])
+           else:
+              raise ValueError("None-existent parameter %s", s[0])
+        elif self.has_key(s[0]):
+            if isinstance(self[s[0]],ParameterSet):
+               return self[s[0]].replace_values('.'.join(s[1:]))
+            else:
+                raise ValueError("Error: parameter %s is not of type ParameterSet but of type %s", s[0], type(self[s[0]]))         
+        else:
+          raise ValueError("None-existent parameter %s", s[0])  
+        
+        
+    def replace_values(self,**args):
+        """
+        This expects its arguments to be in the form path=value, where path is . (dot) delmited path to a parameter in the 
+        parameter tree rooted in this ParameterSet instance. 
+        
+        This function replaces the values of each parameter in the args with corresponding values supplied in arguments.
+        """
+        for k in args.keys():
+            self[k] = args[k]
 
 class ParameterSpace(ParameterSet):
     """A collection of `ParameterSets`, representing multiple points in
