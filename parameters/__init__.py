@@ -578,7 +578,6 @@ class ParameterSet(dict):
     
     def replace_references(self):
         for s,k,v in self.find_references():
-            #ps,pn = self.find_path(v.reference_path)
             if isinstance(self[v.reference_path],ParameterSet):
                 s[k] = self[v.reference_path].tree_copy()
             else:
@@ -593,26 +592,6 @@ class ParameterSet(dict):
             elif isinstance(v,ParameterSet):   
                l += v.find_references()
         return l
-    
-    def find_path(path):
-        """
-        Assumes path being a . delimeted path to a parameter in the parameter tree rooted in this ParameterSet.
-        It returns tuple (ps,k) where the ps is the ParameterSet containing the parameter, and k is the parameter name.
-        """
-        s = path.split('.')
-        if len(s) == 1:
-           if self.has_key(s[0]):
-              return (self,s[0])
-           else:
-              raise ValueError("None-existent parameter %s", s[0])
-        elif self.has_key(s[0]):
-            if isinstance(self[s[0]],ParameterSet):
-               return self[s[0]].replace_values('.'.join(s[1:]))
-            else:
-                raise ValueError("Error: parameter %s is not of type ParameterSet but of type %s", s[0], type(self[s[0]]))         
-        else:
-          raise ValueError("None-existent parameter %s", s[0])  
-        
         
     def replace_values(self,**args):
         """
