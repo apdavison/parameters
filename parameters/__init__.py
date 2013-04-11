@@ -587,7 +587,6 @@ class ParameterSet(dict):
         l = []
         for k,v in self.iteritems():
             if isinstance(v,ParameterReference):
-               print v
                l += [(self,k,v)]
             elif isinstance(v,ParameterSet):   
                l += v.find_references()
