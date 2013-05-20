@@ -137,22 +137,38 @@ class ParameterSetCreateTest(unittest.TestCase):
            all: /somewhere1/file1.xml
            specific: /somewhere2/file2.xml
         """
-
         ps = ParameterSet
-
         tf = tempfile.NamedTemporaryFile(suffix='.yaml', mode='w')
         tf.file.writelines(conf1_str)
-
         tf.file.flush()
         tf.file.seek(0)
-
-        ps = ParameterSet("file://"+tf.name)
-
+        ps = ParameterSet("file://" + tf.name)
         tf.close()
-
         ps1 = ParameterSet(yaml.load(conf1_str))
         assert ps1 == ps
 
+    def test_create_with_references(self):
+        ps = ParameterSet({'hello': 'world',
+                           'ps2': {
+                                'ps': {'a': 1, 'b': 2},
+                                'c': 19
+                                },
+                           'null': None,
+                           'true': False,
+                           'mylist': [1, 2, 3, 4],
+                           'mydict': {'c': 3, 'd': 4},
+                           'yourlist': [1, 2, {'e': 5, 'f': 6}],
+                           'ref1': ParameterReference('null'),
+                           'ref2': ParameterReference('ps2.ps.b'),
+                           'nested_refs': {
+                                'ref3': ParameterReference('mydict.d'),
+                           }
+                          })
+        ps.replace_references()
+        self.assertEqual(ps.ref1, None)
+        self.assertEqual(ps.ref2, 2)
+        self.assertEqual(ps.nested_refs.ref3, 4)
+    
 
 class ParameterSetSaveLoadTest(unittest.TestCase):
 
@@ -263,7 +279,7 @@ class ParameterSetDiffTest(unittest.TestCase):
         ps2 = ParameterSet(self.ps.as_dict())
         ps2.yourlist = [100, 2, {'e': 55, 'f': 6}]
         self.assertEqual(ps2 - self.ps, ({'yourlist': [100, 2, {'e': 55, 'f': 6}]},
-                                         {'yourlist': [1, 2, {'e': 5, 'f': 6}]}))
+                                         {'yourlist': [1, 2, {'e': 5, 'f': 6}]}))    
 
 
 class ParameterSpaceDotAccess(unittest.TestCase):
