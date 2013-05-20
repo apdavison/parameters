@@ -23,7 +23,7 @@ To run the tests, we suggest installing at least nose, NumPy and PyYAML. You
 may also need to install SciPy.
 
 To obtain the Parameters source code, you will need a GitHub account. You
-should then fork https://github.com/apdavison/parameters (see the
+should then fork https://github.com/NeuralEnsemble/parameters (see the
 `GitHub documentation`_ if you are new to GitHub) and clone your own copy of
 the repository::
 
@@ -73,7 +73,7 @@ making a release:
 * bump the version numbers
 
 .. _`GitHub documentation`: http://help.github.com/fork-a-repo/
-.. _`issue_tracker`: https://github.com/apdavison/parameters/issues
+.. _`issue_tracker`: https://github.com/NeuralEnsemble/parameters/issues
 .. _virtualenv: http://www.virtualenv.org/
 .. _`pull request`: http://help.github.com/send-pull-requests/
 .. _`Python 3 Porting Guide`: http://docs.pythonsprints.com/python3_porting/index.html

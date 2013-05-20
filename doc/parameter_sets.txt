@@ -73,6 +73,9 @@ Note that although we show here only numerical parameter values,
 :class:`Parameter`, :class:`ParameterRange` and :class:`ParameterDist` objects, as well as
 strings, may also be parameter values.
 
+.. todo:: describe references ('ref' and the :class:`ParameterReference` class)
+
+
 Navigation
 ~~~~~~~~~~
     
@@ -100,6 +103,7 @@ spaces):
 
     >>> P['network'].excitatory_cells['tau_m']
     10.0
+
 
 Viewing and saving
 ~~~~~~~~~~~~~~~~~~

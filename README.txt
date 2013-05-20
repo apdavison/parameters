@@ -61,5 +61,5 @@ https://parameters.readthedocs.org/
 Reporting Bugs
 ==============
 
-https://github.com/apdavison/parameters/issues
+https://github.com/NeuralEnsemble/parameters/issues
 

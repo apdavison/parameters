@@ -9,6 +9,7 @@ Classes
 
 Parameter
 ParameterRange - for specifying a list of possible values for a given parameter.
+ParameterReference - specify a parameter in terms of the value of another parameter.
 ParameterSet   - for representing/managing hierarchical parameter sets.
 ParameterTable - a sub-class of ParameterSet that can represent a table of parameters.
 ParameterSpace - a collection of ParameterSets, representing multiple points in
@@ -34,6 +35,7 @@ SchemaBase           - The base class of all "active" Schema objects to be place
 Functions
 ---------
 
+load_parameters   - 
 nesteddictwalk    - Walk a nested dict structure, using a generator.
 nesteddictflatten - Return a flattened version of a nested dict structure.
 string_table      - Convert a table written as a multi-line string into a dict of dicts.
@@ -92,15 +94,6 @@ def isiterable(x):
 def contains_instance(collection, cls):
     return any(isinstance(o, cls) for o in collection)
 
-# Deprecated: should use ParameterSet('file:///path/to/filename')
-# def read_parameters(filename):
-#    """Read parameters from a text file."""
-#    parameters = {}
-#    f = open(filename, 'r')
-#    exec(f) in globals(), parameters
-#    f.close()
-#    return parameters
-
 
 def nesteddictwalk(d, separator='.'):
     """
@@ -128,9 +121,6 @@ def nesteddictflatten(d, separator='.'):
     for k, v in nesteddictwalk(d, separator):
         flatd[k] = v
     return flatd
-
-
-# --- Parameters, and ranges and distributions of them -------------------
 
 
 class Parameter(object):
@@ -194,27 +184,29 @@ class ParameterRange(Parameter):
         else:
             return False
 
-# --- ReferenceParameter
-"""
-This class just provides place-holder for a reference parameter that will be later replaced with the content 
-of the parameter tree pointed to by the reference.
-"""
+
 class ParameterReference(object):
-      def __init__(self,reference):
-          object.__init__(self)  
-          self.reference_path = reference
+    """
+    This class provides a place-holder for a reference parameter that will
+    later be replaced with the value of the parameter pointed to by the
+    reference.
+    """
+
+    def __init__(self, reference):
+        self.reference_path = reference
 
 
-# This is a function that should be used to load ParameterSet from url
 
-def load_parameters(parameter_url,modified_parameters):
+def load_parameters(parameter_url, modified_parameters):
+    """
+    Load a ParameterSet from a url.
+    """
     parameters = ParameterSet(parameter_url)
     parameters.replace_values(**modified_parameters)
     parameters.replace_references()
     return parameters
 
 
-# --- ParameterSet and subclasses ----------------------------------------
 class ParameterSet(dict):
     """
     A class to manage hierarchical parameter sets.
@@ -245,7 +237,8 @@ class ParameterSet(dict):
         string, containing objects of types `int`, `float`, `str`, `list`,
         `dict` plus the classes defined in this module, `Parameter`,
         `ParameterRange`, etc.  No other object types are allowed,
-        except the function url('some_url') or ref('point.delmitted.path') e.g.::
+        except the function `url('some_url')` or `ref('point.delimited.path')`,
+        e.g.::
         
             { 'a' : {'A': 3, 'B': 4},
               'b' : [1,2,3],
@@ -256,16 +249,18 @@ class ParameterSet(dict):
         This is largely the JSON (www.json.org) format, but with
         extra keywords in the namespace such as `ParameterRange`, `GammaDist`, etc.
         """
-        global_dict = dict(ref=ParameterReference,url=ParameterSet, ParameterSet=ParameterSet)
-        global_dict.update(dict(ParameterRange=ParameterRange,
-                                ParameterTable=ParameterTable,
-                                GammaDist=GammaDist,
-                                UniformDist=UniformDist,
-                                NormalDist=NormalDist,
-                                pi=math.pi,
-                                true=True,    # these are for reading JSON
-                                false=False,  # files
-                                ))
+        global_dict = dict(ref=ParameterReference,
+                           url=ParameterSet,
+                           ParameterSet=ParameterSet,
+                           ParameterRange=ParameterRange,
+                           ParameterTable=ParameterTable,
+                           GammaDist=GammaDist,
+                           UniformDist=UniformDist,
+                           NormalDist=NormalDist,
+                           pi=math.pi,
+                           true=True,    # these are for reading JSON
+                           false=False,  # files
+                           )
         if update_namespace:
             global_dict.update(update_namespace)
 
@@ -577,35 +572,40 @@ class ParameterSet(dict):
             parameters_to_latex(filename, self, **kwargs)
     
     def replace_references(self):
-        for s,k,v in self.find_references():
-            if isinstance(self[v.reference_path],ParameterSet):
+        for s, k, v in self.find_references():
+            if isinstance(self[v.reference_path], ParameterSet):
                 s[k] = self[v.reference_path].tree_copy()
             else:
                 s[k] = self[v.reference_path]
-        
+
     def find_references(self):
         l = []
-        for k,v in self.iteritems():
-            if isinstance(v,ParameterReference):
-               l += [(self,k,v)]
-            elif isinstance(v,ParameterSet):   
+        for k,v in self.items():
+            if isinstance(v, ParameterReference):
+               l += [(self, k, v)]
+            elif isinstance(v, ParameterSet):   
                l += v.find_references()
         return l
-        
-    def replace_values(self,**args):
+
+    def replace_values(self, **args):
         """
-        This expects its arguments to be in the form path=value, where path is . (dot) delmited path to a parameter in the 
-        parameter tree rooted in this ParameterSet instance. 
+        This expects its arguments to be in the form path=value, where path is a
+        . (dot) delimited path to a parameter in the  parameter tree rooted in
+        this ParameterSet instance. 
         
-        This function replaces the values of each parameter in the args with corresponding values supplied in arguments.
+        This function replaces the values of each parameter in the args with the
+        corresponding values supplied in the arguments.
         """
         for k in args.keys():
             self[k] = args[k]
 
+
 class ParameterSpace(ParameterSet):
-    """A collection of `ParameterSets`, representing multiple points in
+    """
+    A collection of `ParameterSets`, representing multiple points in
     parameter space. Created by putting `ParameterRange` and/or `ParameterDist`
-    objects within a `ParameterSet`."""
+    objects within a `ParameterSet`.
+    """
 
     def iter_range_key(self, range_key):
         """ An iterator of the `ParameterSpace` which yields the
