@@ -25,7 +25,7 @@ parameter sets for complex models.  In particular it provides tools for
 License
 =======
 
-Copyright (C) 2008-2013  Andrew Davison, Eilif Muller
+Copyright (C) 2008-2013  Andrew Davison, Eilif Muller, Jan Antolik
 
 Parameters is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

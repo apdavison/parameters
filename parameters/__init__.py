@@ -77,7 +77,7 @@ except NameError:
         return obj.next()
 
 
-__version__ = '0.2.0dev'
+__version__ = '0.2.0'
 
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY']  # user has to define it
@@ -763,9 +763,9 @@ class ParameterSpace(ParameterSet):
         range_keys = self.range_keys()
         range_keys.sort()
         for key in range_keys:
-            value = eval('current_experiment.'+key)
+            value = eval('current_experiment.' + key)
             try:
-                value_index = list(eval('self.'+key)._values).index(value)
+                value_index = list(eval('self.' + key)._values).index(value)
             except ValueError:
                 raise ValueError(
                     "The ParameterSet provided is not within the ParameterSpace")

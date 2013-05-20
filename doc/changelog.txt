@@ -21,4 +21,5 @@ are:
 * added support for YAML-format parameter files;
 * added support for opening remote parameter files where you are accessing the
   web via a proxy server;
-* added export of parameter sets in LaTeX.
+* added export of parameter sets in LaTeX;
+* addition of references, i.e. specifying one parameter by reference to another.

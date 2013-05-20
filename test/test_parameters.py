@@ -335,7 +335,7 @@ class ParameterSpaceIterationTest(unittest.TestCase):
         assert out2 in (out, out1)
 
     def test_is_ref_by_default(self):
-        # check that we're returning only many version of the same
+        # check that we're returning only many versions of the same
         # object by default
         ps7 = self.ps7
         out = [x for x in ps7.iter_inner()]
