@@ -51,6 +51,8 @@ from __future__ import absolute_import
 import copy
 import warnings
 import math
+import operator
+from functools import wraps
 try:
     from urllib2 import build_opener, install_opener, urlopen, ProxyHandler  # Python 2
     from urlparse import urlparse
@@ -195,19 +197,80 @@ class ParameterRange(Parameter):
             return False
 
 # --- ReferenceParameter
-"""
-This class just provides place-holder for a reference parameter that will be later replaced with the content 
-of the parameter tree pointed to by the reference.
-"""
+def reverse(func):
+    """Given a function f(a, b), returns f(b, a)"""
+    @wraps(func)
+    def reversed_func(a, b):
+        return func(b, a)
+    reversed_func.__doc__ = "Reversed argument form of %s" % func.__doc__
+    reversed_func.__name__ = "reversed %s" % func.__name__
+    return reversed_func
+    
+def lazy_operation(name, reversed=False):
+    def op(self, val):
+        f = getattr(operator, name)
+        if reversed:
+           f = reverse(f)
+        self.operations.append((f, val))
+        return self
+    return op
+
 class ParameterReference(object):
+      """
+      This class just provides place-holder for a reference parameter that will be later replaced with the content 
+      of the parameter tree pointed to by the reference. This class also allows for lazy application of operations meaning that 
+      one can use the reference in simple formulas that will get evaluated at the moment the reference is replaced. 
+      
+      Check below which operations are supported.
+      """
       def __init__(self,reference):
           object.__init__(self)  
           self.reference_path = reference
+          self.operations = []
 
+      def _apply_operations(self, x):
+          for f, arg in self.operations:
+              try:
+                  if arg is None:
+                      x = f(x)
+                  else:
+                      x = f(x, arg)
+              except TypeError:
+                  raise TypeError("ParameterReference: error applying operation " + str(f) + " with argument " + str(arg) + " to " + str(x))
+          return x
+      
+      def evaluate(self,parameter_set):
+          """
+          This function evaluetes the reference, using the ParameterSet in parameter_set as the source.
+          """
+          ref_value = parameter_set[self.reference_path]
+          if isinstance(ref_value,ParameterSet):
+             if self.operations == []:
+                return ref_value.tree_copy()
+             else:
+                raise ValueError("ParameterReference: lazy operations cannot be applied to argument of type ParameterSet> %s" % self.reference_path) 
+          else:
+             return self._apply_operations(ref_value)
 
-# This is a function that should be used to load ParameterSet from url
+      __add__  = lazy_operation('add')
+      __radd__ = __add__
+      __sub__  = lazy_operation('sub')
+      __rsub__ = lazy_operation('sub', reversed=True)
+      __mul__  = lazy_operation('mul')
+      __rmul__ = __mul__
+      __div__  = lazy_operation('div')
+      __rdiv__ = lazy_operation('div', reversed=True)
+      __truediv__ = lazy_operation('truediv')
+      __rtruediv__ = lazy_operation('truediv', reversed=True)
+      __pow__  = lazy_operation('pow')
 
 def load_parameters(parameter_url,modified_parameters):
+    """
+    This is a function that should be used to load ParameterSet from url.
+    
+    modified_parameters can be a dictionary of parameters and their values. These will
+    be replaced in the loaded parameter set before the references are expanded.
+    """
     parameters = ParameterSet(parameter_url)
     parameters.replace_values(**modified_parameters)
     parameters.replace_references()
@@ -577,17 +640,16 @@ class ParameterSet(dict):
             parameters_to_latex(filename, self, **kwargs)
     
     def replace_references(self):
-        for s,k,v in self.find_references():
-            if isinstance(self[v.reference_path],ParameterSet):
-                s[k] = self[v.reference_path].tree_copy()
-            else:
-                s[k] = self[v.reference_path]
+        while True:
+            refs = self.find_references()
+            if len(refs) == 0: break
+            for s,k,v in refs:
+                s[k] = v.evaluate(self)
         
     def find_references(self):
         l = []
         for k,v in self.iteritems():
             if isinstance(v,ParameterReference):
-               print v
                l += [(self,k,v)]
             elif isinstance(v,ParameterSet):   
                l += v.find_references()
