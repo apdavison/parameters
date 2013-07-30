@@ -647,13 +647,13 @@ class ParameterSet(dict):
 
     def find_references(self):
         l = []
-        for k, v in self.iteritems():
+        for k, v in self.items():
             if isinstance(v, ParameterReference):
                l += [(self, k, v)]
             elif isinstance(v, ParameterSet):   
                l += v.find_references()
-        return l
-        
+        return l    
+    
     def replace_values(self,**args):
         """
         This expects its arguments to be in the form path=value, where path is a
