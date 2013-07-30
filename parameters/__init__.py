@@ -35,7 +35,6 @@ SchemaBase           - The base class of all "active" Schema objects to be place
 Functions
 ---------
 
-load_parameters   - 
 nesteddictwalk    - Walk a nested dict structure, using a generator.
 nesteddictflatten - Return a flattened version of a nested dict structure.
 string_table      - Convert a table written as a multi-line string into a dict of dicts.
@@ -53,6 +52,8 @@ from __future__ import absolute_import
 import copy
 import warnings
 import math
+import operator
+from functools import wraps
 try:
     from urllib2 import build_opener, install_opener, urlopen, ProxyHandler  # Python 2
     from urlparse import urlparse
@@ -77,7 +78,7 @@ except NameError:
         return obj.next()
 
 
-__version__ = '0.2.0'
+__version__ = '0.3dev'
 
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY']  # user has to define it
@@ -121,6 +122,9 @@ def nesteddictflatten(d, separator='.'):
     for k, v in nesteddictwalk(d, separator):
         flatd[k] = v
     return flatd
+
+
+# --- Parameters, and ranges and distributions of them -------------------
 
 
 class Parameter(object):
@@ -184,22 +188,84 @@ class ParameterRange(Parameter):
         else:
             return False
 
+# --- ReferenceParameter
+def reverse(func):
+    """Given a function f(a, b), returns f(b, a)"""
+    @wraps(func)
+    def reversed_func(a, b):
+        return func(b, a)
+    reversed_func.__doc__ = "Reversed argument form of %s" % func.__doc__
+    reversed_func.__name__ = "reversed %s" % func.__name__
+    return reversed_func
+    
+def lazy_operation(name, reversed=False):
+    def op(self, val):
+        f = getattr(operator, name)
+        if reversed:
+           f = reverse(f)
+        self.operations.append((f, val))
+        return self
+    return op
 
 class ParameterReference(object):
     """
     This class provides a place-holder for a reference parameter that will
     later be replaced with the value of the parameter pointed to by the
-    reference.
+    reference. This class also allows for lazy application of operations,
+    meaning that one can use the reference in simple formulas that will get
+    evaluated at the moment the reference is replaced. 
+    
+    Check below which operations are supported.
     """
-
-    def __init__(self, reference):
+    def __init__(self,reference):
+        object.__init__(self)  
         self.reference_path = reference
+        self.operations = []
 
+    def _apply_operations(self, x):
+        for f, arg in self.operations:
+            try:
+                if arg is None:
+                    x = f(x)
+                else:
+                    x = f(x, arg)
+            except TypeError:
+                raise TypeError("ParameterReference: error applying operation " + str(f) + " with argument " + str(arg) + " to " + str(x))
+        return x
+    
+    def evaluate(self,parameter_set):
+        """
+        This function evaluetes the reference, using the ParameterSet in parameter_set as the source.
+        """
+        ref_value = parameter_set[self.reference_path]
+        if isinstance(ref_value,ParameterSet):
+           if self.operations == []:
+              return ref_value.tree_copy()
+           else:
+              raise ValueError("ParameterReference: lazy operations cannot be applied to argument of type ParameterSet> %s" % self.reference_path) 
+        else:
+           return self._apply_operations(ref_value)
+
+    __add__  = lazy_operation('add')
+    __radd__ = __add__
+    __sub__  = lazy_operation('sub')
+    __rsub__ = lazy_operation('sub', reversed=True)
+    __mul__  = lazy_operation('mul')
+    __rmul__ = __mul__
+    __div__  = lazy_operation('div')
+    __rdiv__ = lazy_operation('div', reversed=True)
+    __truediv__ = lazy_operation('truediv')
+    __rtruediv__ = lazy_operation('truediv', reversed=True)
+    __pow__  = lazy_operation('pow')
 
 
 def load_parameters(parameter_url, modified_parameters):
     """
-    Load a ParameterSet from a url.
+    This is a function that should be used to load a ParameterSet from a url.
+    
+    `modified_parameters` should be a dictionary of parameters and their values.
+    These will be replaced in the loaded parameter set before the references are
+    expanded.
     """
     parameters = ParameterSet(parameter_url)
     parameters.replace_values(**modified_parameters)
@@ -260,7 +326,7 @@ class ParameterSet(dict):
                            pi=math.pi,
                            true=True,    # these are for reading JSON
                            false=False,  # files
-                           )
+                        )
         if update_namespace:
             global_dict.update(update_namespace)
 
@@ -572,22 +638,23 @@ class ParameterSet(dict):
             parameters_to_latex(filename, self, **kwargs)
     
     def replace_references(self):
-        for s, k, v in self.find_references():
-            if isinstance(self[v.reference_path], ParameterSet):
-                s[k] = self[v.reference_path].tree_copy()
-            else:
-                s[k] = self[v.reference_path]
+        while True:
+            refs = self.find_references()
+            if len(refs) == 0:
+                break
+            for s, k, v in refs:
+                s[k] = v.evaluate(self)
 
     def find_references(self):
         l = []
-        for k,v in self.items():
+        for k, v in self.iteritems():
             if isinstance(v, ParameterReference):
                l += [(self, k, v)]
             elif isinstance(v, ParameterSet):   
                l += v.find_references()
         return l
-
-    def replace_values(self, **args):
+        
+    def replace_values(self,**args):
         """
         This expects its arguments to be in the form path=value, where path is a
         . (dot) delimited path to a parameter in the  parameter tree rooted in
@@ -763,9 +830,9 @@ class ParameterSpace(ParameterSet):
         range_keys = self.range_keys()
         range_keys.sort()
         for key in range_keys:
-            value = eval('current_experiment.' + key)
+            value = eval('current_experiment.'+key)
             try:
-                value_index = list(eval('self.' + key)._values).index(value)
+                value_index = list(eval('self.'+key)._values).index(value)
             except ValueError:
                 raise ValueError(
                     "The ParameterSet provided is not within the ParameterSpace")
