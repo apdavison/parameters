@@ -243,9 +243,20 @@ class ParameterReference(object):
               return ref_value.tree_copy()
            else:
               raise ValueError("ParameterReference: lazy operations cannot be applied to argument of type ParameterSet> %s" % self.reference_path) 
+        elif isinstance(ref_value,ParameterReference):
+             #lets wait until the refe
+             return self
         else:
            return self._apply_operations(ref_value)
 
+    def copy(self):
+        pr = ParameterReference(self.reference_path)
+        for f, arg in self.operations:
+            if isinstance(arg,ParameterReference):
+               pr.operations.append((f,arg.copy())) 
+            else:
+               pr.operations.append((f,arg))      
+        return pr
     __add__  = lazy_operation('add')
     __radd__ = __add__
     __sub__  = lazy_operation('sub')
@@ -569,8 +580,9 @@ class ParameterSet(dict):
         for key in self:
             value = self[key]
             if isinstance(value, ParameterSet):
-                # recurse
                 tmp[key] = value.tree_copy()
+            elif isinstance(value,ParameterReference):                
+                tmp[key] = value.copy()
             else:
                 tmp[key] = value
         if tmp._is_space():
@@ -644,7 +656,8 @@ class ParameterSet(dict):
                 break
             for s, k, v in refs:
                 s[k] = v.evaluate(self)
-
+                    
+                    
     def find_references(self):
         l = []
         for k, v in self.iteritems():
