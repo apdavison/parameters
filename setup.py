@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name="parameters",
-    version="0.2.0",
+    version="0.2.1",
     packages=['parameters'],
     author="The NeuralEnsemble Community",
     author_email="davison@unic.cnrs-gif.fr",

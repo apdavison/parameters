@@ -202,7 +202,7 @@ Iteration
 ~~~~~~~~~
 
 There are several different ways to iterate over all or part of the
-:class:`ParameterSet` object. :meth`keys()`, :meth`values()` and :meth`items()` work as for
+:class:`ParameterSet` object. :meth:`keys()`, :meth:`values()` and :meth:`items()` work as for
 :class:`dict`\s. For the sake of more readable code, :meth:`names()` is provided as an
 alias for :meth:`keys()` and :meth:`parameters()` as an alias for :meth:`items()`:
 

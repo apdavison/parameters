@@ -78,7 +78,7 @@ except NameError:
         return obj.next()
 
 
-__version__ = '0.3dev'
+__version__ = '0.2.1'
 
 if 'HTTP_PROXY' in environ:
     HTTP_PROXY = environ['HTTP_PROXY']  # user has to define it

@@ -23,3 +23,10 @@ are:
   web via a proxy server;
 * added export of parameter sets in LaTeX;
 * addition of references, i.e. specifying one parameter by reference to another.
+
+Version 0.2.1
+-------------
+
+* added simple operations to references, e.g. you can specify that a given
+  parameter is twice the value of another;
+* fixed bug with complex nested references.
