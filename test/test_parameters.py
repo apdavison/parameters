@@ -15,12 +15,25 @@ from copy import deepcopy
 import pickle
 import numpy
 
+# Workaround to get "unittest.skipUnless" for python 2.6
+try:
+    from unittest import skipUnless
+except ImportError:
+    # Python 2.6
+    def skipUnless(condition, reason):
+        if condition:
+            return lambda x: x
+        else:
+            return lambda x: None
+
+# workaround to get "next" in python 2
 try:
     next                  # Python 3
 except NameError:
     def next(obj):        # Python 2
         return obj.next()
 
+# Check for scipy
 try:
     import scipy
     have_scipy = True
@@ -395,7 +408,7 @@ class ParameterSpaceWithDistributionsTest(unittest.TestCase):
     def test_dist_keys(self):
         self.assertEqual(set(self.ps.dist_keys()), set(['g', 'l', 'd.g2']))
 
-    @unittest.skipUnless(have_scipy, "SciPy not available")
+    @skipUnless(have_scipy, "SciPy not available")
     def test_realize_dists_with_copy_True(self):
         gen = self.ps.realize_dists(n=2, copy=True)
         assert isinstance(gen, types.GeneratorType)
@@ -409,7 +422,7 @@ class ParameterSpaceWithDistributionsTest(unittest.TestCase):
         self.assertNotEqual(output[0].l[1], output[1].l[1])
         self.assertEqual(output[0].l[2], output[1].l[2])
 
-    @unittest.skipUnless(have_scipy, "SciPy not available")
+    @skipUnless(have_scipy, "SciPy not available")
     def test_realize_dists_with_copy_False(self):
         gen = self.ps.realize_dists(n=2, copy=False)
         assert isinstance(gen, types.GeneratorType)
