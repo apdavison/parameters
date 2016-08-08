@@ -105,6 +105,140 @@ class ParameterSchemeTest(unittest.TestCase):
         #s1.mylist = parameters.validators.Eval('isinstance(x,list) and all([isinstance(elem,int) for elem in x])',var='x')
         assert v.validate(p1,s1)==True
 
+    def test_complex_dict_eval(self):
+
+        p_str = """
+        item:
+            # PROJ_NAME: ["morphology base name", density(#/mm^2)]
+            PROJ_VPM: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+            PROJ_POM: ["TCPROJ_POmAnt_to_SOM_S1_", 469.0]
+        """
+
+        s_str = """
+        item: !!python/object:parameters.validators.Eval { expr: 'isinstance(x,dict) and all', var: 'x'}
+        """
+        
+        
+        s1 = ParameterSchema(yaml.load(s_str))
+        p1 = ParameterSet(yaml.load(p_str))
+
+        v = CongruencyValidator()
+        # test Eval which checks for isinstance(x,list)
+        #s1.mylist = parameters.validators.Eval('isinstance(x,list) and all([isinstance(elem,int) for elem in x])',var='x')
+        assert v.validate(p1,s1, strict_tree=False)==True
+
+    def test_wildcard_fail_eval(self):
+
+        p_str = """
+        item:
+            # PROJ_NAME: ["morphology base name", density(#/mm^2)]
+            PROJ_VPM: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+            PROJ_POM: 1.0
+        """
+
+        s_str = """
+        item: 
+            <<ANY_KEY>>: ["MORPH_BASE_NAME", 1.0]
+        """
+        
+        s1 = ParameterSchema(yaml.load(s_str))
+        p1 = ParameterSet(yaml.load(p_str))
+
+        v = CongruencyValidator()
+        self.assertRaises(ValidationError, v.validate, p1, s1, strict_tree=False)
+
+    def test_wildcard_exception_eval(self):
+
+        p_str = """
+        item:
+            # PROJ_NAME: ["morphology base name", density(#/mm^2)]
+            PROJ_VPM: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+            PROJ_POM: 1.0
+            PROJ_VPM2: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+
+        """
+
+        s_str = """
+        item: 
+            <<ANY_KEY>>: ["MORPH_BASE_NAME", 1.0]
+            PROJ_POM: 1.0
+        """
+        
+        s1 = ParameterSchema(yaml.load(s_str))
+        p1 = ParameterSet(yaml.load(p_str))
+
+        v = CongruencyValidator()
+        assert v.validate(p1,s1, strict_tree=False)==True
+
+
+    def test_wildcard_eval(self):
+
+        p_str = """
+        item:
+            # PROJ_NAME: ["morphology base name", density(#/mm^2)]
+            PROJ_VPM: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+            PROJ_POM: ["TCPROJ_POmAnt_to_SOM_S1_", 469.0]
+        """
+
+        s_str = """
+        item: 
+            <<ANY_KEY>>: ["MORPH_BASE_NAME", 1.0]
+        """
+        
+        s1 = ParameterSchema(yaml.load(s_str))
+        p1 = ParameterSet(yaml.load(p_str))
+
+        v = CongruencyValidator()
+        # test Eval which checks for isinstance(x,list)
+        #s1.mylist = parameters.validators.Eval('isinstance(x,list) and all([isinstance(elem,int) for elem in x])',var='x')
+        assert v.validate(p1,s1, strict_tree=False)==True
+
+    def test_wildcard_lax_list_force_fail(self):
+
+        p_str = """
+        item:
+            # PROJ_NAME: ["morphology base name", density(#/mm^2)]
+            PROJ_VPM: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+            PROJ_POM: ["TCPROJ_POmAnt_to_SOM_S1_", 123.0]
+            PROJ_FAIL: [""]
+        """
+
+        s_str = """
+        item: 
+            <<ANY_KEY>>: !!python/object:parameters.validators.StrictContentTypes {val: ["",100.0] } 
+        """
+        
+        s1 = ParameterSchema(yaml.load(s_str))
+        p1 = ParameterSet(yaml.load(p_str))
+
+        v = CongruencyValidator()
+        # test Eval which checks for isinstance(x,list)
+        #s1.mylist = parameters.validators.Eval('isinstance(x,list) and all([isinstance(elem,int) for elem in x])',var='x')
+        self.assertRaises(ValidationError, v.validate, p1, s1, strict_tree=False)
+
+    def test_wildcard_lax_list(self):
+
+        p_str = """
+        item:
+            # PROJ_NAME: ["morphology base name", density(#/mm^2)]
+            PROJ_VPM: ["TCPROJ_VPM_to_SOM_S1_", 968.35]
+            PROJ_POM: ["TCPROJ_POmAnt_to_SOM_S1_", 469.0]
+            PROJ_WANT_FAILING_BUT_DOESNT: [""]
+        """
+
+        s_str = """
+        item: 
+            <<ANY_KEY>>: ["MORPH_BASE_NAME", 1.0]
+        """
+        
+        s1 = ParameterSchema(yaml.load(s_str))
+        p1 = ParameterSet(yaml.load(p_str))
+
+        v = CongruencyValidator()
+        # test Eval which checks for isinstance(x,list)
+        #s1.mylist = parameters.validators.Eval('isinstance(x,list) and all([isinstance(elem,int) for elem in x])',var='x')
+        assert v.validate(p1,s1, strict_tree=False)==True
+
 
 
     def test_simple_validate(self):

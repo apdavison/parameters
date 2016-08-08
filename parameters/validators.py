@@ -36,6 +36,7 @@ import yaml
 from parameters import ParameterSet
 import parameters
 
+SCHEMA_WILDCARD = "<<ANY_KEY>>"
 
 class SchemaBase(object):
     """ The base class of all "active" `Schema` objects to be placed in a `ParameterSchema`.
@@ -81,6 +82,38 @@ class Subclass(SchemaBase):
         else:
             return False
 
+class StrictContentTypes(SchemaBase):
+    """
+    To be used as a value in a `ParameterSchema`.  Validates the same-path
+    `ParameterSet` interable (list, tuple) has contents each of the same type.
+
+    See also: `SchemaBase`
+    """
+
+    def __init__(self, val=None):
+        self.val = val
+
+    def validate(self, leaf):
+        if not isinstance(leaf, type(self.val)):
+            return False
+        if len(leaf)!=len(self.val):
+            return False
+        for x,y in zip(leaf, self.val):
+            if type(x)!=type(y):
+                import pdb;pdb.set_trace()
+                return False
+        return True
+
+    def __repr__(self):
+        cls = self.__class__
+        return '.'.join([cls.__module__, cls.__name__])+'(val=%s)' % (repr(self.val),)
+
+    def __eq__(self, x):
+        if isinstance(x, StrictContentTypes):
+            return self.val == x.val
+        else:
+            return False
+
 
 class Eval(SchemaBase):
     """
@@ -112,7 +145,7 @@ class Eval(SchemaBase):
 
 
 # add all schema checkers to this list
-schema_checkers = [Subclass, Eval]
+schema_checkers = [Subclass, Eval, StrictContentTypes]
 # create a namespace of schema_checkers
 schema_checkers_namespace = {}
 for x in schema_checkers:
@@ -168,6 +201,27 @@ class ParameterSchema(ParameterSet):
             else:
                 self.flat_add(key, Subclass(type=type(value)))
 
+    def __getitem__(self, name):
+        """ Modified ParameterSet get, that also handles Wildcards in the schema"""
+        split = name.split('.', 1)
+        if len(split) == 1:
+            try:
+                return dict.__getitem__(self, name)
+            except KeyError as e:
+                # if there is a Wildcard in the dict, return the associated value
+                # otherwise raise the error
+                if SCHEMA_WILDCARD in self:
+                    return self[SCHEMA_WILDCARD]
+                else:
+                    raise e
+        # nested get
+        ps = dict.__getitem__(self, split[0])
+        if isinstance(ps, ParameterSet):
+            return ps[split[1]]
+        else: 
+            raise KeyError, "invalid parameter path for ParameterSet: %s" % name
+
+
 
 class ValidationError(Exception):
     """ Raised when `ParameterSchema` validation fails, and provides failure information
@@ -210,15 +264,14 @@ class CongruencyValidator(object):
     def __init__(self):
         pass
 
-    def validate(self, parameter_set, parameter_schema):
+    def validate(self, parameter_set, parameter_schema, strict_tree=True):
         """
         Validates a `ParameterSet` against a `ParameterSchema`
         either returning `True`, or raising a `ValidationError` with the path and `SchemaBase` subclass
         for which validation failed.
 
-
-        Expects all names defined in the schema to be present in the parameter set
-        and vice-versa, and will run validation for each item in the namespace tree.
+        Expects all names defined in the schema to be present in the parameter set.
+        and vice-versa (if strict_tree=True), and will run validation for each item in the namespace tree.
 
         See also: `CongruencyValidator`.
 
@@ -231,20 +284,47 @@ class CongruencyValidator(object):
         schema_keys = set()
 
         for path, sb in schema.flat():
-            try:
-                val = ps[path]
-            except KeyError:
-                raise ValidationError(path=path, schema_base=sb,
-                                      parameter='<MISSING>')
-            if not sb.validate(val):
-                raise ValidationError(path=path, schema_base=sb, parameter=val)
+            if SCHEMA_WILDCARD in path:
+                #import pdb; pdb.set_trace()
+                # validate sub-tree for all matching keys in ps
+                # get the path to the parent item to the wildcard
+                base = path.split(SCHEMA_WILDCARD,1)[0][:-1]
+                # validate for all daughter items to this in the ps against wildcard subtree
+                schema_sub = schema[base][SCHEMA_WILDCARD]
+                if isinstance(schema_sub, ParameterSet):
+                    for key in ps[base]:
+                        ps_sub = ps[base][key]
+                        if not isinstance(ps_sub, ParameterSet):
+                            raise ValidationError(path=base, schema_base=path,
+                                                  parameter=key)
+                        v = CongruencyValidator()
+                        v.validate(ps_sub, schema_sub)
+                else:
+                    for key in ps[base]:
+                        ps_sub = ps[base][key]
+                        # if specific key is in schema continue, will be checked later specfically 
+                        # by non wild card code, below
+                        if key in schema[base]:
+                            continue
+                        # else check val matches the wildcard
+                        if not schema_sub.validate(ps_sub):
+                            raise ValidationError(path=base, schema_base=path, parameter=key)
 
-        for path, val in ps.flat():
-            try:
-                sb = schema[path]
-            except KeyError:
-                raise ValidationError(path=path, schema_base='<MISSING>',
-                                      parameter=val)
+            else:
+                try:
+                    val = ps[path]
+                except KeyError:
+                    raise ValidationError(path=path, schema_base=sb,
+                                          parameter='<MISSING>')
+                if not sb.validate(val):
+                    raise ValidationError(path=path, schema_base=sb, parameter=val)
+
+        if strict_tree==True:
+            for path, val in ps.flat():
+                try:
+                    sb = schema[path]
+                except KeyError:
+                    raise ValidationError(path=path, schema_base='<MISSING>', parameter=val)
 
         return True
 

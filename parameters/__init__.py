@@ -470,7 +470,11 @@ class ParameterSet(dict):
         if len(split) == 1:
             return dict.__getitem__(self, name)
         # nested get
-        return dict.__getitem__(self, split[0])[split[1]]
+        ps = dict.__getitem__(self, split[0])
+        if isinstance(ps, ParameterSet):
+            return ps[split[1]]
+        else: 
+            raise KeyError, "invalid parameter path for ParameterSet: %s" % name
 
     def flat_add(self, name, value):
         """ Like `__setitem__`, but it will add `ParameterSet({})` objects
